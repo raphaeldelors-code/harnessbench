@@ -1,128 +1,0 @@
-9 instances already run, skipping...
-No instances to run.
-Total instances: 10
-Instances submitted: 10
-Instances completed: 9
-Instances incomplete: 0
-Instances resolved: 5
-Instances unresolved: 4
-Instances with likely infrastructure failures: 0
-Instances with ambiguous failures: 0
-Instances with empty patches: 1
-Instances with errors: 0
-Unstopped containers: 0
-Unremoved images: 10
-Report written to openai__strata_iq3s.hb_mini.json
-/home/rapha/agentswe/.venv/bin/python -m swebench.harness.run_evaluation -d /home/rapha/agentswe/sb10_new.json -s test -p /home/rapha/harnessbench/out/mini/preds.json -id hb_mini --max_workers 2 -t 900
-EVAL2_DONE mini rc=0
-Running 10 instances...
-  0%|          | 0/10 [00:00<?, ?it/s] 10%|█         | 1/10 [00:17<02:37, 17.55s/it]1 ran successfully, 0 failed:  10%|█         | 1/10 [00:17<02:37, 17.55s/it]1 ran successfully, 0 failed:  20%|██        | 2/10 [00:18<01:15,  9.39s/it]2 ran successfully, 0 failed:  20%|██        | 2/10 [00:18<01:15,  9.39s/it]2 ran successfully, 0 failed:  30%|███       | 3/10 [00:54<02:08, 18.32s/it]3 ran successfully, 0 failed:  30%|███       | 3/10 [00:54<02:08, 18.32s/it]3 ran successfully, 0 failed:  40%|████      | 4/10 [00:56<01:25, 14.19s/it]4 ran successfully, 0 failed:  40%|████      | 4/10 [00:56<01:25, 14.19s/it]4 ran successfully, 0 failed:  50%|█████     | 5/10 [01:41<01:41, 20.27s/it]5 ran successfully, 0 failed:  50%|█████     | 5/10 [01:41<01:41, 20.27s/it]5 ran successfully, 0 failed:  60%|██████    | 6/10 [01:57<01:18, 19.55s/it]6 ran successfully, 0 failed:  60%|██████    | 6/10 [01:57<01:18, 19.55s/it]6 ran successfully, 0 failed:  70%|███████   | 7/10 [02:15<00:58, 19.34s/it]7 ran successfully, 0 failed:  70%|███████   | 7/10 [02:15<00:58, 19.34s/it]7 ran successfully, 0 failed:  80%|████████  | 8/10 [02:34<00:38, 19.34s/it]8 ran successfully, 0 failed:  80%|████████  | 8/10 [02:34<00:38, 19.34s/it]8 ran successfully, 0 failed:  90%|█████████ | 9/10 [02:55<00:19, 19.51s/it]9 ran successfully, 0 failed:  90%|█████████ | 9/10 [02:55<00:19, 19.51s/it]9 ran successfully, 0 failed: 100%|██████████| 10/10 [08:35<00:00, 51.59s/it]10 ran successfully, 0 failed: 100%|██████████| 10/10 [08:35<00:00, 51.59s/it]10 ran successfully, 0 failed: 100%|██████████| 10/10 [08:35<00:00, 51.59s/it]
-Error in evaluation for pylint-dev__pylint-4551: >>>>> Patch Apply Failed:
-patching file ChangeLog
-Hunk #1 succeeded at 12 with fuzz 3.
-can't find file to patch at input line 20
-Perhaps you used the wrong -p or --strip option?
-The text leading up to this was:
---------------------------
-|diff --git a/doc/whatsnew/2.10.rst b/doc/whatsnew/2.10.rst
-|index cadfc3fa6..26b792a6a 100644
-|--- a/doc/whatsnew/2.10.rst
-|+++ b/doc/whatsnew/2.10.rst
---------------------------
-No file to patch.  Skipping patch.
-1 out of 1 hunk ignored
-patching file pylint/pyreverse/utils.py
-Hunk #1 FAILED at 269.
-1 out of 1 hunk FAILED -- saving rejects to file pylint/pyreverse/utils.py.rej
-
-Check (logs/run_evaluation/hb_claude-code/openai__strata_iq3s/pylint-dev__pylint-4551/run_instance.log) for more information.
-All instances run.
-Total instances: 10
-Instances submitted: 10
-Instances completed: 9
-Instances incomplete: 0
-Instances resolved: 5
-Instances unresolved: 4
-Instances with likely infrastructure failures: 0
-Instances with ambiguous failures: 0
-Instances with empty patches: 0
-Instances with errors: 1
-Unstopped containers: 0
-Unremoved images: 10
-Report written to openai__strata_iq3s.hb_claude-code.json
-/home/rapha/agentswe/.venv/bin/python -m swebench.harness.run_evaluation -d /home/rapha/agentswe/sb10_new.json -s test -p /home/rapha/harnessbench/out/claude-code/preds.json -id hb_claude-code --max_workers 2 -t 900
-EVAL2_DONE claude-code rc=0
-Running 9 instances...
-  0%|          | 0/9 [00:00<?, ?it/s] 11%|█         | 1/9 [00:17<02:23, 17.89s/it]1 ran successfully, 0 failed:  11%|█         | 1/9 [00:17<02:23, 17.89s/it]1 ran successfully, 0 failed:  22%|██▏       | 2/9 [00:19<01:06,  9.51s/it]2 ran successfully, 0 failed:  22%|██▏       | 2/9 [00:19<01:06,  9.51s/it]2 ran successfully, 0 failed:  33%|███▎      | 3/9 [00:58<01:56, 19.45s/it]3 ran successfully, 0 failed:  33%|███▎      | 3/9 [00:58<01:56, 19.45s/it]3 ran successfully, 0 failed:  44%|████▍     | 4/9 [00:59<01:14, 14.98s/it]4 ran successfully, 0 failed:  44%|████▍     | 4/9 [00:59<01:14, 14.98s/it]4 ran successfully, 0 failed:  56%|█████▌    | 5/9 [01:15<01:00, 15.16s/it]5 ran successfully, 0 failed:  56%|█████▌    | 5/9 [01:15<01:00, 15.16s/it]5 ran successfully, 0 failed:  67%|██████▋   | 6/9 [01:33<00:46, 15.60s/it]6 ran successfully, 0 failed:  67%|██████▋   | 6/9 [01:33<00:46, 15.60s/it]6 ran successfully, 0 failed:  78%|███████▊  | 7/9 [01:52<00:32, 16.11s/it]7 ran successfully, 0 failed:  78%|███████▊  | 7/9 [01:52<00:32, 16.11s/it]7 ran successfully, 0 failed:  89%|████████▉ | 8/9 [02:13<00:16, 16.69s/it]8 ran successfully, 0 failed:  89%|████████▉ | 8/9 [02:13<00:16, 16.69s/it]8 ran successfully, 0 failed: 100%|██████████| 9/9 [08:43<00:00, 58.12s/it]9 ran successfully, 0 failed: 100%|██████████| 9/9 [08:43<00:00, 58.12s/it]9 ran successfully, 0 failed: 100%|██████████| 9/9 [08:43<00:00, 58.12s/it]
-Error in evaluation for pylint-dev__pylint-4551: >>>>> Patch Apply Failed:
-patching file ChangeLog
-Hunk #1 succeeded at 12 with fuzz 3.
-can't find file to patch at input line 20
-Perhaps you used the wrong -p or --strip option?
-The text leading up to this was:
---------------------------
-|diff --git a/doc/whatsnew/2.10.rst b/doc/whatsnew/2.10.rst
-|index cadfc3fa6..26b792a6a 100644
-|--- a/doc/whatsnew/2.10.rst
-|+++ b/doc/whatsnew/2.10.rst
---------------------------
-No file to patch.  Skipping patch.
-1 out of 1 hunk ignored
-patching file pylint/pyreverse/utils.py
-Hunk #1 FAILED at 269.
-1 out of 1 hunk FAILED -- saving rejects to file pylint/pyreverse/utils.py.rej
-
-Check (logs/run_evaluation/hb_pi/openai__strata_iq3s/pylint-dev__pylint-4551/run_instance.log) for more information.
-All instances run.
-Total instances: 10
-Instances submitted: 10
-Instances completed: 8
-Instances incomplete: 0
-Instances resolved: 5
-Instances unresolved: 3
-Instances with likely infrastructure failures: 0
-Instances with ambiguous failures: 0
-Instances with empty patches: 1
-Instances with errors: 1
-Unstopped containers: 0
-Unremoved images: 10
-Report written to openai__strata_iq3s.hb_pi.json
-/home/rapha/agentswe/.venv/bin/python -m swebench.harness.run_evaluation -d /home/rapha/agentswe/sb10_new.json -s test -p /home/rapha/harnessbench/out/pi/preds.json -id hb_pi --max_workers 2 -t 900
-EVAL2_DONE pi rc=0
-Running 7 instances...
-  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:17<01:43, 17.33s/it]1 ran successfully, 0 failed:  14%|█▍        | 1/7 [00:17<01:43, 17.33s/it]1 ran successfully, 0 failed:  29%|██▊       | 2/7 [00:18<00:46,  9.23s/it]2 ran successfully, 0 failed:  29%|██▊       | 2/7 [00:18<00:46,  9.23s/it]2 ran successfully, 0 failed:  43%|████▎     | 3/7 [01:05<01:27, 21.78s/it]3 ran successfully, 0 failed:  43%|████▎     | 3/7 [01:05<01:27, 21.78s/it]3 ran successfully, 0 failed:  57%|█████▋    | 4/7 [01:23<01:02, 20.87s/it]4 ran successfully, 0 failed:  57%|█████▋    | 4/7 [01:23<01:02, 20.87s/it]4 ran successfully, 0 failed:  71%|███████▏  | 5/7 [01:42<00:41, 20.52s/it]5 ran successfully, 0 failed:  71%|███████▏  | 5/7 [01:42<00:41, 20.52s/it]5 ran successfully, 0 failed:  86%|████████▌ | 6/7 [02:03<00:20, 20.57s/it]6 ran successfully, 0 failed:  86%|████████▌ | 6/7 [02:03<00:20, 20.57s/it]6 ran successfully, 0 failed: 100%|██████████| 7/7 [07:56<00:00, 68.06s/it]7 ran successfully, 0 failed: 100%|██████████| 7/7 [07:56<00:00, 68.06s/it]7 ran successfully, 0 failed: 100%|██████████| 7/7 [07:56<00:00, 68.06s/it]
-All instances run.
-Total instances: 10
-Instances submitted: 10
-Instances completed: 7
-Instances incomplete: 0
-Instances resolved: 5
-Instances unresolved: 2
-Instances with likely infrastructure failures: 0
-Instances with ambiguous failures: 0
-Instances with empty patches: 3
-Instances with errors: 0
-Unstopped containers: 0
-Unremoved images: 10
-Report written to openai__strata_iq3s.hb_deepseek-harness.json
-/home/rapha/agentswe/.venv/bin/python -m swebench.harness.run_evaluation -d /home/rapha/agentswe/sb10_new.json -s test -p /home/rapha/harnessbench/out/deepseek-harness/preds.json -id hb_deepseek-harness --max_workers 2 -t 900
-EVAL2_DONE deepseek-harness rc=0
-Running 8 instances...
-  0%|          | 0/8 [00:00<?, ?it/s] 12%|█▎        | 1/8 [00:17<02:01, 17.36s/it]1 ran successfully, 0 failed:  12%|█▎        | 1/8 [00:17<02:01, 17.36s/it]1 ran successfully, 0 failed:  25%|██▌       | 2/8 [00:18<00:55,  9.23s/it]2 ran successfully, 0 failed:  25%|██▌       | 2/8 [00:18<00:55,  9.23s/it]2 ran successfully, 0 failed:  38%|███▊      | 3/8 [00:57<01:35, 19.05s/it]3 ran successfully, 0 failed:  38%|███▊      | 3/8 [00:57<01:35, 19.05s/it]3 ran successfully, 0 failed:  50%|█████     | 4/8 [00:59<00:59, 14.76s/it]4 ran successfully, 0 failed:  50%|█████     | 4/8 [00:59<00:59, 14.76s/it]4 ran successfully, 0 failed:  62%|██████▎   | 5/8 [01:16<00:46, 15.39s/it]5 ran successfully, 0 failed:  62%|██████▎   | 5/8 [01:16<00:46, 15.39s/it]5 ran successfully, 0 failed:  75%|███████▌  | 6/8 [01:36<00:32, 16.03s/it]6 ran successfully, 0 failed:  75%|███████▌  | 6/8 [01:36<00:32, 16.03s/it]6 ran successfully, 0 failed:  88%|████████▊ | 7/8 [01:48<00:15, 15.48s/it]7 ran successfully, 0 failed:  88%|████████▊ | 7/8 [01:48<00:15, 15.48s/it]7 ran successfully, 0 failed: 100%|██████████| 8/8 [01:57<00:00, 14.63s/it]8 ran successfully, 0 failed: 100%|██████████| 8/8 [01:57<00:00, 14.63s/it]8 ran successfully, 0 failed: 100%|██████████| 8/8 [01:57<00:00, 14.63s/it]
-All instances run.
-Total instances: 10
-Instances submitted: 10
-Instances completed: 8
-Instances incomplete: 0
-Instances resolved: 5
-Instances unresolved: 3
-Instances with likely infrastructure failures: 0
-Instances with ambiguous failures: 0
-Instances with empty patches: 2
-Instances with errors: 0
-Unstopped containers: 0
-Unremoved images: 10
-Report written to openai__strata_iq3s.hb_opencode.json
-/home/rapha/agentswe/.venv/bin/python -m swebench.harness.run_evaluation -d /home/rapha/agentswe/sb10_new.json -s test -p /home/rapha/harnessbench/out/opencode/preds.json -id hb_opencode --max_workers 2 -t 900
-EVAL2_DONE opencode rc=0
-EVAL2_ALL_DONE

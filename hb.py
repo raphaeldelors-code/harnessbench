@@ -27,7 +27,9 @@ OUT = os.path.join(BASE, "out")
 REPOS = os.path.join(BASE, "repos")
 HB = "/home/rapha/hb"          # host base
 CTR_HB = "/opt/hb"           # same dir mounted read-only inside containers
-DATASET = "/home/rapha/agentswe/sb10_new.json"
+DATASET = os.environ.get("HB_DATASET") or os.path.join(BASE, "data", "instances", "sb40_new.json")
+if not os.path.exists(DATASET):
+    DATASET = "/home/rapha/agentswe/sb10_new.json"
 VENV = "/home/rapha/agentswe/.venv/bin/python"
 MODEL = os.environ.get("HB_MODEL", "strata_iq3s")
 RESUME = {"on": False}
@@ -206,6 +208,7 @@ def cmd_run(a):
     preds_path = os.path.join(od, "preds.json")
     preds = json.load(open(preds_path)) if os.path.exists(preds_path) and a.resume else {}
     wins = open(os.path.join(od, "windows.jsonl"), "a")
+    predlock = threading.Lock()
     # telemetry poller (HTTP only)
     stop = threading.Event()
     def poll():
@@ -215,16 +218,19 @@ def cmd_run(a):
                 f.write(r.stdout + "\n")
             time.sleep(30)
     threading.Thread(target=poll, daemon=True).start()
-    for iid in insts:
-        if iid in preds and a.resume:
-            print("SKIP(done)", iid); continue
+    todo = [i for i in insts if not (a.resume and i in preds)]
+    def one(iid):
         t0 = int(time.time())
         res = run_container_harness(harness, iid, harness)
         t1 = int(time.time())
-        wins.write(json.dumps({"harness": harness, "instance_id": iid, "t0": t0, "t1": t1}) + "\n"); wins.flush()
-        preds[iid] = {"model_name": f"hb-{MODEL}", "model_name_or_path": "openai/" + MODEL, "instance_id": iid, "model_patch": res["patch"]}
-        json.dump(preds, open(preds_path, "w"))
-        print(f"done {iid} wall={res['wall']}s ec={res['ec']} patch={res['patch_bytes']}B")
+        with predlock:
+            wins.write(json.dumps({"harness": harness, "instance_id": iid, "t0": t0, "t1": t1}) + "\n"); wins.flush()
+            preds[iid] = {"model_name": f"hb-{MODEL}", "model_name_or_path": "openai/" + MODEL, "instance_id": iid, "model_patch": res["patch"]}
+            json.dump(preds, open(preds_path, "w"))
+        print(f"done {iid} wall={res['wall']}s ec={res['ec']} patch={res['patch_bytes']}B", flush=True)
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=max(1, getattr(a, "workers", 1))) as ex:
+        list(ex.map(one, todo))
     stop.set()
 
 def cmd_eval(a):
@@ -241,11 +247,13 @@ def cmd_run_mini(a):
     tag = "mini"
     od = os.path.join(OUT, tag)
     os.makedirs(od, exist_ok=True)
-    filt = "^(" + "|".join(sorted(load_instances(None))) + ")$"
+    sel = load_instances(a.inst or None)
+    filt = "^(" + "|".join(sorted(sel)) + ")$"
     cmd = [VENV, "-m", "minisweagent.run.benchmarks.swebench",
            "-o", os.path.join("/home/rapha/agentswe", "out9_mini"),
            "-m", "openai/" + MODEL, "-c", "swebench.yaml", "-c", "bench_local7.yaml",
-           "--subset", "verified", "--split", "test", "--filter", filt, "-w", "1"]
+           "--subset", "verified", "--split", "test", "--filter", filt,
+           "-w", str(max(1, getattr(a, "workers", 1)))]
     stop = threading.Event()
     def poll():
         while not stop.is_set():
@@ -261,8 +269,10 @@ def cmd_run_mini(a):
         json.dumps({"harness": tag, "instance_id": "ALL", "t0": t0, "t1": t1}) + "\n")
     src = "/home/rapha/agentswe/out9_mini/preds.json"
     if os.path.exists(src):
-        preds = json.load(open(src))
-        json.dump(preds, open(os.path.join(od, "preds.json"), "w"))
+        dstp = os.path.join(od, "preds.json")
+        merged = json.load(open(dstp)) if os.path.exists(dstp) else {}
+        merged.update(json.load(open(src)))
+        json.dump(merged, open(dstp, "w"))
     stop.set()
 
 def cmd_report(a):
@@ -348,9 +358,13 @@ if __name__ == "__main__":
     p = sub.add_parser("smoke"); p.add_argument("--harness", required=True)
     p = sub.add_parser("run"); p.add_argument("--harness", required=True)
     p.add_argument("--inst", action="append"); p.add_argument("--resume", action="store_true")
+    p.add_argument("--workers", type=int, default=2); p.add_argument("--dataset")
     p = sub.add_parser("eval"); p.add_argument("--harness", required=True)
-    sub.add_parser("run-mini")
+    p.add_argument("--dataset")
+    p = sub.add_parser("run-mini"); p.add_argument("--inst", action="append")
+    p.add_argument("--workers", type=int, default=2); p.add_argument("--dataset")
     sub.add_parser("report")
     a = ap.parse_args()
+    if getattr(a, "dataset", None): DATASET = a.dataset
     {"prep": cmd_prep, "smoke": cmd_smoke, "run": cmd_run, "eval": cmd_eval,
      "report": cmd_report, "run-mini": cmd_run_mini}[a.cmd](a)
