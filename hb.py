@@ -222,7 +222,7 @@ def cmd_run(a):
         res = run_container_harness(harness, iid, harness)
         t1 = int(time.time())
         wins.write(json.dumps({"harness": harness, "instance_id": iid, "t0": t0, "t1": t1}) + "\n"); wins.flush()
-        preds[iid] = {"model_name": f"hb-{MODEL}", "instance_id": iid, "model_patch": res["patch"]}
+        preds[iid] = {"model_name": f"hb-{MODEL}", "model_name_or_path": "openai/" + MODEL, "instance_id": iid, "model_patch": res["patch"]}
         json.dump(preds, open(preds_path, "w"))
         print(f"done {iid} wall={res['wall']}s ec={res['ec']} patch={res['patch_bytes']}B")
     stop.set()

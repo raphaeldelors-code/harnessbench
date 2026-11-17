@@ -1,0 +1,7 @@
+| harness | resolved | empty patches | wall h | api calls | input tok | output tok | cached tok |
+|---|---|---|---|---|---|---|---|
+| claude-code | ? | ? | 1.09 | 484 | 12803913 | 213163 | 12590566 | resolved_per_GPUh: ?
+| pi | ? | ? | 1.52 | 555 | 14526839 | 193023 | 14254872 | resolved_per_GPUh: ?
+| deepseek-harness | ? | ? | 1.34 | 506 | 13157428 | 195411 | 12875596 | resolved_per_GPUh: ?
+| opencode | ? | ? | 0.8 | 485 | 11833955 | 162922 | 11534067 | resolved_per_GPUh: ?
+| mini | ? | ? | 1.02 | 366 | 8996804 | 153104 | 7064495 | resolved_per_GPUh: ?

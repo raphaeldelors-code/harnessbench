@@ -1,0 +1,55 @@
+2026-11-17 11:53:33,177 - INFO - Creating container for pylint-dev__pylint-4551...
+2026-11-17 11:53:33,219 - INFO - Container for pylint-dev__pylint-4551 created: a3c97b1ef71edb61d3b81166a8f0f9f7af627d8a397cb4bd0b7d3ae30b8edc8e
+2026-11-17 11:53:33,319 - INFO - Container for pylint-dev__pylint-4551 started: a3c97b1ef71edb61d3b81166a8f0f9f7af627d8a397cb4bd0b7d3ae30b8edc8e
+2026-11-17 11:53:33,320 - INFO - Intermediate patch for pylint-dev__pylint-4551 written to logs/run_evaluation/hb_claude-code/openai__strata_iq3s/pylint-dev__pylint-4551/patch.diff, now applying to container...
+2026-11-17 11:53:33,390 - INFO - Failed to apply patch to container: git apply --verbose
+2026-11-17 11:53:33,610 - INFO - Failed to apply patch to container: git apply --verbose --3way
+2026-11-17 11:53:33,734 - INFO - Failed to apply patch to container: git apply --verbose --reject
+2026-11-17 11:53:33,857 - INFO - Failed to apply patch to container: patch --batch --forward --fuzz=5 -p1 -i
+2026-11-17 11:53:33,889 - INFO - >>>>> Patch Apply Failed:
+patching file ChangeLog
+Hunk #1 succeeded at 12 with fuzz 3.
+can't find file to patch at input line 20
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|diff --git a/doc/whatsnew/2.10.rst b/doc/whatsnew/2.10.rst
+|index cadfc3fa6..26b792a6a 100644
+|--- a/doc/whatsnew/2.10.rst
+|+++ b/doc/whatsnew/2.10.rst
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+patching file pylint/pyreverse/utils.py
+Hunk #1 FAILED at 269.
+1 out of 1 hunk FAILED -- saving rejects to file pylint/pyreverse/utils.py.rej
+
+2026-11-17 11:53:33,890 - INFO - Traceback (most recent call last):
+  File "/home/rapha/agentswe/.venv/lib/python3.14/site-packages/swebench/harness/run_evaluation.py", line 333, in run_instance
+    raise EvaluationError(
+    ...<3 lines>...
+    )
+swebench.harness.utils.EvaluationError: Error in evaluation for pylint-dev__pylint-4551: >>>>> Patch Apply Failed:
+patching file ChangeLog
+Hunk #1 succeeded at 12 with fuzz 3.
+can't find file to patch at input line 20
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|diff --git a/doc/whatsnew/2.10.rst b/doc/whatsnew/2.10.rst
+|index cadfc3fa6..26b792a6a 100644
+|--- a/doc/whatsnew/2.10.rst
+|+++ b/doc/whatsnew/2.10.rst
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+patching file pylint/pyreverse/utils.py
+Hunk #1 FAILED at 269.
+1 out of 1 hunk FAILED -- saving rejects to file pylint/pyreverse/utils.py.rej
+
+Check (logs/run_evaluation/hb_claude-code/openai__strata_iq3s/pylint-dev__pylint-4551/run_instance.log) for more information.
+
+2026-11-17 11:53:33,890 - INFO - Attempting to stop container sweb.eval.pylint-dev__pylint-4551.hb_claude-code...
+2026-11-17 11:53:49,040 - INFO - Container sweb.eval.pylint-dev__pylint-4551.hb_claude-code stopped successfully.
+2026-11-17 11:53:49,040 - INFO - Attempting to remove container sweb.eval.pylint-dev__pylint-4551.hb_claude-code...
+2026-11-17 11:53:49,098 - INFO - Container sweb.eval.pylint-dev__pylint-4551.hb_claude-code removed successfully.

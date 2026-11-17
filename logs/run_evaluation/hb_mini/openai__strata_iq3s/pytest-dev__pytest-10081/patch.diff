@@ -1,0 +1,25 @@
+diff --git a/changelog/10088.bugfix.rst b/changelog/10088.bugfix.rst
+new file mode 100644
+index 000000000..01d2e1363
+--- /dev/null
++++ b/changelog/10088.bugfix.rst
+@@ -0,0 +1 @@
++Fix ``unittest.TestCase.tearDown()`` being called (with ``--pdb``) for test classes which are marked with ``@unittest.skip``.
+diff --git a/src/_pytest/unittest.py b/src/_pytest/unittest.py
+index 851e4943b..3121db02f 100644
+--- a/src/_pytest/unittest.py
++++ b/src/_pytest/unittest.py
+@@ -316,7 +316,12 @@ class TestCaseFunction(Function):
+             # Arguably we could always postpone tearDown(), but this changes the moment where the
+             # TestCase instance interacts with the results object, so better to only do it
+             # when absolutely needed.
+-            if self.config.getoption("usepdb") and not _is_skipped(self.obj):
++            # Consider the case where the test itself is skipped, but the class isn't.
++            if (
++                self.config.getoption("usepdb")
++                and not _is_skipped(self.obj)
++                and not _is_skipped(self.parent.obj)  # type: ignore[attr-defined]
++            ):
+                 self._explicit_tearDown = self._testcase.tearDown
+                 setattr(self._testcase, "tearDown", lambda *args: None)
+ 

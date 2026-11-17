@@ -1,0 +1,22 @@
+diff --git a/changelog/9911.bugfix.rst b/changelog/9911.bugfix.rst
+new file mode 100644
+index 000000000..4281df15b
+--- /dev/null
++++ b/changelog/9911.bugfix.rst
+@@ -0,0 +1 @@
++Fix ``caplog.get_records()`` returning a stale list of records after ``caplog.clear()`` was called: the captured records list is now cleared in place instead of being replaced, so it stays in sync with ``caplog.records``.
+diff --git a/src/_pytest/logging.py b/src/_pytest/logging.py
+index a4f4214b1..cdfa80cec 100644
+--- a/src/_pytest/logging.py
++++ b/src/_pytest/logging.py
+@@ -440,7 +440,9 @@ class LogCaptureFixture:
+ 
+     def clear(self) -> None:
+         """Reset the list of log records and the captured log text."""
+-        self.handler.reset()
++        self.handler.records.clear()
++        self.handler.stream.truncate(0)
++        self.handler.stream.seek(0)
+ 
+     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
+         """Set the level of a logger for the duration of a test.

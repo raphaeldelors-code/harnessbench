@@ -1,0 +1,84 @@
+2026-11-17 12:09:14,849 - INFO - Creating container for psf__requests-1142...
+2026-11-17 12:09:14,894 - INFO - Container for psf__requests-1142 created: 2f2362c38f4d7760735f0dc9ec2d572702739ec61366186439a7b4f7e2f10d35
+2026-11-17 12:09:15,002 - INFO - Container for psf__requests-1142 started: 2f2362c38f4d7760735f0dc9ec2d572702739ec61366186439a7b4f7e2f10d35
+2026-11-17 12:09:15,002 - INFO - Intermediate patch for psf__requests-1142 written to logs/run_evaluation/hb_deepseek-harness/openai__strata_iq3s/psf__requests-1142/patch.diff, now applying to container...
+2026-11-17 12:09:15,073 - INFO - >>>>> Applied Patch:
+Checking patch requests/models.py...
+Checking patch test_requests.py...
+Applied patch requests/models.py cleanly.
+Applied patch test_requests.py cleanly.
+
+2026-11-17 12:09:15,119 - INFO - Git diff before:
+diff --git a/requests/models.py b/requests/models.py
+index 9926045..38425b7 100644
+--- a/requests/models.py
++++ b/requests/models.py
+@@ -386,13 +386,16 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
+         self.body = body
+ 
+     def prepare_content_length(self, body):
+-        self.headers['Content-Length'] = '0'
+         if hasattr(body, 'seek') and hasattr(body, 'tell'):
+             body.seek(0, 2)
+             self.headers['Content-Length'] = str(body.tell())
+             body.seek(0, 0)
+         elif body is not None:
+             self.headers['Content-Length'] = str(len(body))
++        elif self.method not in ('GET', 'HEAD'):
++            # Content-Length of 0 is only added to methods that may have a
++            # body, so that GET and HEAD requests don't send one by default.
++            self.headers['Content-Length'] = '0'
+ 
+     def prepare_auth(self, auth):
+         """Prepares the given HTTP auth data."""
+diff --git a/test_requests.py b/test_requests.py
+index c974e98..312c955 100644
+--- a/test_requests.py
++++ b/test_requests.py
+@@ -58,6 +58,13 @@ class RequestsTestCase(unittest.TestCase):
+         assert pr.body == 'life=42'
+ 
+ 
++    def test_no_content_length(self):
++        get_req = requests.Request('GET', httpbin('get')).prepare()
++        self.assertTrue('Content-Length' not in get_req.headers)
++        head_req = requests.Request('HEAD', httpbin('head')).prepare()
++        self.assertTrue('Content-Length' not in head_req.headers)
++
++
+     def test_path_is_not_double_encoded(self):
+         request = requests.Request('GET', "http://0.0.0.0/get/test case").prepare()
+2026-11-17 12:09:15,119 - INFO - Eval script for psf__requests-1142 written to logs/run_evaluation/hb_deepseek-harness/openai__strata_iq3s/psf__requests-1142/eval.sh; copying to container...
+2026-11-17 12:09:16,954 - INFO - Test runtime: 1.80 seconds
+2026-11-17 12:09:16,955 - INFO - Test output for psf__requests-1142 written to logs/run_evaluation/hb_deepseek-harness/openai__strata_iq3s/psf__requests-1142/test_output.txt
+2026-11-17 12:09:16,989 - INFO - Git diff after:
+diff --git a/requests/models.py b/requests/models.py
+index 9926045..38425b7 100644
+--- a/requests/models.py
++++ b/requests/models.py
+@@ -386,13 +386,16 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
+         self.body = body
+ 
+     def prepare_content_length(self, body):
+-        self.headers['Content-Length'] = '0'
+         if hasattr(body, 'seek') and hasattr(body, 'tell'):
+             body.seek(0, 2)
+             self.headers['Content-Length'] = str(body.tell())
+             body.seek(0, 0)
+         elif body is not None:
+             self.headers['Content-Length'] = str(len(body))
++        elif self.method not in ('GET', 'HEAD'):
++            # Content-Length of 0 is only added to methods that may have a
++            # body, so that GET and HEAD requests don't send one by default.
++            self.headers['Content-Length'] = '0'
+ 
+     def prepare_auth(self, auth):
+         """Prepares the given HTTP auth data."""
+2026-11-17 12:09:16,989 - INFO - Git diff changed after running eval script
+2026-11-17 12:09:16,989 - INFO - Grading answer for psf__requests-1142...
+2026-11-17 12:09:16,990 - INFO - report: {'psf__requests-1142': {'patch_is_None': False, 'patch_exists': True, 'patch_successfully_applied': True, 'resolved': True, 'infra_failure': False, 'tests_status': {'FAIL_TO_PASS': {'success': ['test_requests.py::RequestsTestCase::test_no_content_length'], 'failure': []}, 'PASS_TO_PASS': {'success': ['test_requests.py::RequestsTestCase::test_basic_building', 'test_requests.py::RequestsTestCase::test_entry_points', 'test_requests.py::RequestsTestCase::test_invalid_url', 'test_requests.py::RequestsTestCase::test_params_are_added_before_fragment', 'test_requests.py::RequestsTestCase::test_path_is_not_double_encoded'], 'failure': []}, 'FAIL_TO_FAIL': {'success': [], 'failure': []}, 'PASS_TO_FAIL': {'success': [], 'failure': []}}}}
+Result for psf__requests-1142: resolved: True
+2026-11-17 12:09:16,990 - INFO - Attempting to stop container sweb.eval.psf__requests-1142.hb_deepseek-harness...
+2026-11-17 12:09:32,132 - INFO - Container sweb.eval.psf__requests-1142.hb_deepseek-harness stopped successfully.
+2026-11-17 12:09:32,132 - INFO - Attempting to remove container sweb.eval.psf__requests-1142.hb_deepseek-harness...
+2026-11-17 12:09:32,165 - INFO - Container sweb.eval.psf__requests-1142.hb_deepseek-harness removed successfully.

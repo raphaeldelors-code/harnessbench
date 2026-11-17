@@ -1,0 +1,45 @@
+diff --git a/ChangeLog b/ChangeLog
+index 9b1ab00a9..7389327cb 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -12,6 +12,10 @@ Release date: TBA
+ ..
+   Put bug fixes that should not wait for a new minor version here
+ 
++* pyreverse: Show class has-a relationships inferred from the type-hint
++
++Closes #4744
++
+ * Added ``ignored-parents`` option to the design checker to ignore specific
+   classes from the ``too-many-ancestors`` check (R0901).
+ 
+diff --git a/doc/whatsnew/2.10.rst b/doc/whatsnew/2.10.rst
+index cadfc3fa6..26b792a6a 100644
+--- a/doc/whatsnew/2.10.rst
++++ b/doc/whatsnew/2.10.rst
+@@ -40,6 +40,8 @@ Extensions
+ Other Changes
+ =============
+ 
++* Pyreverse - Show class has-a relationships inferred from type-hints
++
+ * Performance of the Similarity checker has been improved.
+ 
+ * Added ``time.clock`` to deprecated functions/methods for python 3.3
+diff --git a/pylint/pyreverse/utils.py b/pylint/pyreverse/utils.py
+index 06f8d3b7e..6eb9d43cc 100644
+--- a/pylint/pyreverse/utils.py
++++ b/pylint/pyreverse/utils.py
+@@ -269,9 +269,9 @@ def infer_node(node: Union[astroid.AssignAttr, astroid.AssignName]) -> set:
+     otherwise return a set of the inferred types using the NodeNG.infer method"""
+ 
+     ann = get_annotation(node)
+-    if ann:
+-        return {ann}
+     try:
++        if ann:
++            return set(ann.infer())
+         return set(node.infer())
+     except astroid.InferenceError:
+-        return set()
++        return {ann} if ann else set()

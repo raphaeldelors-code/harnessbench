@@ -1,0 +1,70 @@
+{
+    "total_instances": 10,
+    "submitted_instances": 10,
+    "completed_instances": 9,
+    "resolved_instances": 5,
+    "unresolved_instances": 4,
+    "infra_failure_instances": 0,
+    "ambiguous_failure_instances": 0,
+    "empty_patch_instances": 0,
+    "error_instances": 1,
+    "completed_ids": [
+        "pallets__flask-5014",
+        "psf__requests-1142",
+        "psf__requests-1724",
+        "psf__requests-1766",
+        "psf__requests-1921",
+        "psf__requests-2317",
+        "pylint-dev__pylint-4604",
+        "pytest-dev__pytest-10051",
+        "pytest-dev__pytest-10081"
+    ],
+    "incomplete_ids": [],
+    "empty_patch_ids": [],
+    "submitted_ids": [
+        "pallets__flask-5014",
+        "psf__requests-1142",
+        "psf__requests-1724",
+        "psf__requests-1766",
+        "psf__requests-1921",
+        "psf__requests-2317",
+        "pylint-dev__pylint-4551",
+        "pylint-dev__pylint-4604",
+        "pytest-dev__pytest-10051",
+        "pytest-dev__pytest-10081"
+    ],
+    "resolved_ids": [
+        "pallets__flask-5014",
+        "psf__requests-1142",
+        "pylint-dev__pylint-4604",
+        "pytest-dev__pytest-10051",
+        "pytest-dev__pytest-10081"
+    ],
+    "unresolved_ids": [
+        "psf__requests-1724",
+        "psf__requests-1766",
+        "psf__requests-1921",
+        "psf__requests-2317"
+    ],
+    "infra_failure_ids": [],
+    "ambiguous_failure_ids": [],
+    "failure_reasons": {},
+    "error_ids": [
+        "pylint-dev__pylint-4551"
+    ],
+    "schema_version": 2,
+    "unstopped_instances": 0,
+    "unstopped_containers": [],
+    "unremoved_images": [
+        "swebench/sweb.eval.x86_64.pallets_1776_flask-5014:latest",
+        "swebench/sweb.eval.x86_64.psf_1776_requests-1142:latest",
+        "swebench/sweb.eval.x86_64.psf_1776_requests-1724:latest",
+        "swebench/sweb.eval.x86_64.psf_1776_requests-1766:latest",
+        "swebench/sweb.eval.x86_64.psf_1776_requests-1921:latest",
+        "swebench/sweb.eval.x86_64.psf_1776_requests-2317:latest",
+        "swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-4551:latest",
+        "swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-4604:latest",
+        "swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-10051:latest",
+        "swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-10081:latest"
+    ]
+}
