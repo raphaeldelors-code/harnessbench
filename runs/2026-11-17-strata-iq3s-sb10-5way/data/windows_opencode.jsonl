@@ -1,0 +1,10 @@
+{"harness": "opencode", "instance_id": "pallets__flask-5014", "t0": 1794909625, "t1": 1794909783}
+{"harness": "opencode", "instance_id": "psf__requests-1142", "t0": 1794909783, "t1": 1794910051}
+{"harness": "opencode", "instance_id": "psf__requests-1724", "t0": 1794910051, "t1": 1794910610}
+{"harness": "opencode", "instance_id": "psf__requests-1766", "t0": 1794910610, "t1": 1794910876}
+{"harness": "opencode", "instance_id": "psf__requests-1921", "t0": 1794910876, "t1": 1794911218}
+{"harness": "opencode", "instance_id": "psf__requests-2317", "t0": 1794911218, "t1": 1794911298}
+{"harness": "opencode", "instance_id": "pylint-dev__pylint-4551", "t0": 1794911298, "t1": 1794911660}
+{"harness": "opencode", "instance_id": "pylint-dev__pylint-4604", "t0": 1794911660, "t1": 1794911979}
+{"harness": "opencode", "instance_id": "pytest-dev__pytest-10051", "t0": 1794911979, "t1": 1794912213}
+{"harness": "opencode", "instance_id": "pytest-dev__pytest-10081", "t0": 1794912213, "t1": 1794912519}

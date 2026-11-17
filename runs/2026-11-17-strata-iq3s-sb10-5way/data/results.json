@@ -1,0 +1,162 @@
+{
+ "run_id": "2026-11-17-strata-iq3s-sb10-5way",
+ "harnesses": {
+  "mini": {
+   "resolved": 5,
+   "empty": 1,
+   "wall_s": 3690,
+   "calls": 366,
+   "input_tokens": 8996804,
+   "output_tokens": 153104,
+   "cache_tokens": 7064495,
+   "resolved_per_gpu_h": 4.88,
+   "per_instance": {
+    "pallets__flask-5014": "R",
+    "psf__requests-1142": "R",
+    "psf__requests-1724": "U",
+    "psf__requests-1766": "U",
+    "psf__requests-1921": "U",
+    "psf__requests-2317": "U",
+    "pylint-dev__pylint-4551": "R",
+    "pylint-dev__pylint-4604": "E",
+    "pytest-dev__pytest-10051": "R",
+    "pytest-dev__pytest-10081": "R"
+   },
+   "resolved_ids": [
+    "pallets__flask-5014",
+    "psf__requests-1142",
+    "pylint-dev__pylint-4551",
+    "pytest-dev__pytest-10051",
+    "pytest-dev__pytest-10081"
+   ]
+  },
+  "claude-code": {
+   "resolved": 5,
+   "empty": 0,
+   "wall_s": 3929,
+   "calls": 484,
+   "input_tokens": 12803913,
+   "output_tokens": 213163,
+   "cache_tokens": 12590566,
+   "resolved_per_gpu_h": 4.58,
+   "per_instance": {
+    "pallets__flask-5014": "R",
+    "psf__requests-1142": "R",
+    "psf__requests-1724": "U",
+    "psf__requests-1766": "U",
+    "psf__requests-1921": "U",
+    "psf__requests-2317": "U",
+    "pylint-dev__pylint-4551": "U",
+    "pylint-dev__pylint-4604": "R",
+    "pytest-dev__pytest-10051": "R",
+    "pytest-dev__pytest-10081": "R"
+   },
+   "resolved_ids": [
+    "pallets__flask-5014",
+    "psf__requests-1142",
+    "pylint-dev__pylint-4604",
+    "pytest-dev__pytest-10051",
+    "pytest-dev__pytest-10081"
+   ]
+  },
+  "pi": {
+   "resolved": 5,
+   "empty": 1,
+   "wall_s": 5458,
+   "calls": 555,
+   "input_tokens": 14526839,
+   "output_tokens": 193023,
+   "cache_tokens": 14254872,
+   "resolved_per_gpu_h": 3.3,
+   "per_instance": {
+    "pallets__flask-5014": "R",
+    "psf__requests-1142": "R",
+    "psf__requests-1724": "U",
+    "psf__requests-1766": "U",
+    "psf__requests-1921": "T",
+    "psf__requests-2317": "U",
+    "pylint-dev__pylint-4551": "U",
+    "pylint-dev__pylint-4604": "R",
+    "pytest-dev__pytest-10051": "R",
+    "pytest-dev__pytest-10081": "R"
+   },
+   "resolved_ids": [
+    "pallets__flask-5014",
+    "psf__requests-1142",
+    "pylint-dev__pylint-4604",
+    "pytest-dev__pytest-10051",
+    "pytest-dev__pytest-10081"
+   ]
+  },
+  "deepseek-harness": {
+   "resolved": 5,
+   "empty": 3,
+   "wall_s": 4833,
+   "calls": 506,
+   "input_tokens": 13157428,
+   "output_tokens": 195411,
+   "cache_tokens": 12875596,
+   "resolved_per_gpu_h": 3.72,
+   "per_instance": {
+    "pallets__flask-5014": "R",
+    "psf__requests-1142": "R",
+    "psf__requests-1724": "E",
+    "psf__requests-1766": "E",
+    "psf__requests-1921": "U",
+    "psf__requests-2317": "U",
+    "pylint-dev__pylint-4551": "R",
+    "pylint-dev__pylint-4604": "E",
+    "pytest-dev__pytest-10051": "R",
+    "pytest-dev__pytest-10081": "R"
+   },
+   "resolved_ids": [
+    "pallets__flask-5014",
+    "psf__requests-1142",
+    "pylint-dev__pylint-4551",
+    "pytest-dev__pytest-10051",
+    "pytest-dev__pytest-10081"
+   ]
+  },
+  "opencode": {
+   "resolved": 5,
+   "empty": 2,
+   "wall_s": 2894,
+   "calls": 485,
+   "input_tokens": 11833955,
+   "output_tokens": 162922,
+   "cache_tokens": 11534067,
+   "resolved_per_gpu_h": 6.22,
+   "per_instance": {
+    "pallets__flask-5014": "R",
+    "psf__requests-1142": "R",
+    "psf__requests-1724": "U",
+    "psf__requests-1766": "U",
+    "psf__requests-1921": "U",
+    "psf__requests-2317": "E",
+    "pylint-dev__pylint-4551": "E",
+    "pylint-dev__pylint-4604": "R",
+    "pytest-dev__pytest-10051": "R",
+    "pytest-dev__pytest-10081": "R"
+   },
+   "resolved_ids": [
+    "pallets__flask-5014",
+    "psf__requests-1142",
+    "pylint-dev__pylint-4604",
+    "pytest-dev__pytest-10051",
+    "pytest-dev__pytest-10081"
+   ]
+  }
+ },
+ "instances": [
+  "pallets__flask-5014",
+  "psf__requests-1142",
+  "psf__requests-1724",
+  "psf__requests-1766",
+  "psf__requests-1921",
+  "psf__requests-2317",
+  "pylint-dev__pylint-4551",
+  "pylint-dev__pylint-4604",
+  "pytest-dev__pytest-10051",
+  "pytest-dev__pytest-10081"
+ ]
+}

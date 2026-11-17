@@ -1,5 +1,7 @@
 # harnessbench
 
+**Results & run history: [RESULTS.md](RESULTS.md)**
+
 Which coding harness is most efficient **for the same local model**?
 
 `harnessbench` fixes the model, the tasks, and the grading, and varies only the

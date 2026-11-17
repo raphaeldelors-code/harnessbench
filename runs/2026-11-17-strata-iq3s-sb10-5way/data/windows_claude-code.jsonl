@@ -1,0 +1,10 @@
+{"harness": "claude-code", "instance_id": "pallets__flask-5014", "t0": 1794895401, "t1": 1794895597}
+{"harness": "claude-code", "instance_id": "psf__requests-1142", "t0": 1794895597, "t1": 1794896524}
+{"harness": "claude-code", "instance_id": "psf__requests-1724", "t0": 1794896524, "t1": 1794896906}
+{"harness": "claude-code", "instance_id": "psf__requests-1766", "t0": 1794896906, "t1": 1794897242}
+{"harness": "claude-code", "instance_id": "psf__requests-1921", "t0": 1794897242, "t1": 1794897569}
+{"harness": "claude-code", "instance_id": "psf__requests-2317", "t0": 1794897569, "t1": 1794898182}
+{"harness": "claude-code", "instance_id": "pylint-dev__pylint-4551", "t0": 1794898182, "t1": 1794898628}
+{"harness": "claude-code", "instance_id": "pylint-dev__pylint-4604", "t0": 1794898628, "t1": 1794898968}
+{"harness": "claude-code", "instance_id": "pytest-dev__pytest-10051", "t0": 1794898968, "t1": 1794899191}
+{"harness": "claude-code", "instance_id": "pytest-dev__pytest-10081", "t0": 1794899191, "t1": 1794899330}

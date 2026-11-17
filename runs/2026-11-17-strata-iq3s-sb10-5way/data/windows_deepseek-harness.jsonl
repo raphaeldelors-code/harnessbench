@@ -1,0 +1,10 @@
+{"harness": "deepseek-harness", "instance_id": "pallets__flask-5014", "t0": 1794904790, "t1": 1794904987}
+{"harness": "deepseek-harness", "instance_id": "psf__requests-1142", "t0": 1794904987, "t1": 1794905500}
+{"harness": "deepseek-harness", "instance_id": "psf__requests-1724", "t0": 1794905500, "t1": 1794905696}
+{"harness": "deepseek-harness", "instance_id": "psf__requests-1766", "t0": 1794905696, "t1": 1794905893}
+{"harness": "deepseek-harness", "instance_id": "psf__requests-1921", "t0": 1794905893, "t1": 1794906274}
+{"harness": "deepseek-harness", "instance_id": "psf__requests-2317", "t0": 1794906274, "t1": 1794907380}
+{"harness": "deepseek-harness", "instance_id": "pylint-dev__pylint-4551", "t0": 1794907380, "t1": 1794908497}
+{"harness": "deepseek-harness", "instance_id": "pylint-dev__pylint-4604", "t0": 1794908497, "t1": 1794908647}
+{"harness": "deepseek-harness", "instance_id": "pytest-dev__pytest-10051", "t0": 1794908647, "t1": 1794909162}
+{"harness": "deepseek-harness", "instance_id": "pytest-dev__pytest-10081", "t0": 1794909162, "t1": 1794909623}
