@@ -30,6 +30,7 @@ CTR_HB = "/opt/hb"           # same dir mounted read-only inside containers
 DATASET = "/home/rapha/agentswe/sb10_new.json"
 VENV = "/home/rapha/agentswe/.venv/bin/python"
 MODEL = os.environ.get("HB_MODEL", "strata_iq3s")
+RESUME = {"on": False}
 RUN_TIMEOUT = int(os.environ.get("HB_TIMEOUT", "2700"))
 NODE_PATH = f"{CTR_HB}/node/bin:{CTR_HB}/npm/bin"
 
@@ -58,6 +59,8 @@ HARNESSES = {
     "env": {
       "ANTHROPIC_BASE_URL": "http://127.0.0.1:8080",
       "ANTHROPIC_API_KEY": "***",
+      "ANTHROPIC_AUTH_TOKEN": "***",
+      "IS_SANDBOX": "1",
       "ANTHROPIC_MODEL": MODEL,
       "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
       "DISABLE_AUTOUPDATER": "1",
@@ -95,6 +98,12 @@ MINI_CMD = [VENV, "-m", "minisweagent.run.benchmarks.swebench",
             "-o", None, "-m", "openai/" + MODEL, "-c", "swebench.yaml",
             "-c", "bench_local7.yaml", "--subset", "verified", "--split", "test",
             "-w", "1"]
+
+def purge_contents(path):
+    """Empty a dir whose contents may be root-owned (written by containers)."""
+    if os.path.exists(path):
+        sh(["docker", "run", "--rm", "-v", f"{path}:/x", "alpine",
+            "sh", "-c", "rm -rf /x/* /x/.[!.]* 2>/dev/null; exit 0"])
 
 def sh(cmd, **kw):
     return subprocess.run(cmd, shell=isinstance(cmd, str), capture_output=True, text=True, **kw)
@@ -154,6 +163,8 @@ def run_container_harness(harness, iid, tag):
     wd = make_workdir(iid)
     od = os.path.join(WORK, iid, "out", harness)
     os.makedirs(od, exist_ok=True)
+    if not RESUME.get("on", False):
+        purge_contents(od); purge_contents(os.path.join(WORK, iid, "repo"))
     home = os.path.join(HB, "homes", harness)
     os.makedirs(home, exist_ok=True)
     env = dict(spec["env"]); env["HB_TASK"] = TASK_TEMPLATE.format(problem_statement=r["problem_statement"])
@@ -165,7 +176,8 @@ def run_container_harness(harness, iid, tag):
         "mkdir -p /out; cd /testbed; "
         f"timeout {RUN_TIMEOUT} {spec['cmd'](None)} > /out/traj.log 2>/out/err.log; "
         "EC=$?; echo $EC > /out/ec; "
-        "git add -A; git diff --cached --binary > /out/patch.diff"
+        "find /testbed -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null; git add -A; git diff --cached --binary > /out/patch.diff"
+
     )
     docker = ["docker", "run", "--rm", "--network=host",
               "-v", f"{HB}:/opt/hb:ro",
@@ -300,6 +312,8 @@ def cmd_smoke(a):
     # toy repo inside one eval container; harness must fix a tiny python bug
     wd = os.path.join(WORK, "_smoke", a.harness)
     os.makedirs(wd, exist_ok=True)
+    purge_contents(wd); purge_contents(os.path.join(WORK, "_smoke_out", a.harness))
+    os.makedirs(os.path.join(WORK, "_smoke_out", a.harness), exist_ok=True)
     open(os.path.join(wd, "buggy.py"), "w").write("def add(a, b):\n    return a - b\n")
     open(os.path.join(wd, "test_buggy.py"), "w").write("from buggy import add\nassert add(2, 3) == 5\nprint('OK')\n")
     sh(["git", "init", "-q"], cwd=wd); sh(["git", "add", "-A"], cwd=wd)
@@ -309,7 +323,7 @@ def cmd_smoke(a):
     inner = ("git config --global --add safe.directory /testbed; mkdir -p /out; cd /testbed; "
              f"timeout 300 {spec['cmd'](None)} > /out/traj.log 2>/out/err.log; EC=$?; echo $EC > /out/ec; "
              "python3 test_buggy.py > /out/smoke.txt 2>&1; "
-             "git add -A; git diff --cached > /out/patch.diff; cat /out/smoke.txt")
+             "find /testbed -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null; git add -A; git diff --cached > /out/patch.diff; cat /out/smoke.txt")
     docker = ["docker", "run", "--rm", "--network=host",
               "-v", f"{HB}:/opt/hb:ro", "-v", f"{wd}:/testbed",
               "-v", f"{WORK}/_smoke_out/{a.harness}:/out",

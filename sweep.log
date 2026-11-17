@@ -1,0 +1,17 @@
+[2026-11-17T04:53:11Z] SWEEP_START mini
+This is mini-swe-agent version 2.4.6.
+Check the v2 migration guide at https://klieret.short.gy/mini-v2-migration
+Loading global config from '/home/rapha/.config/mini-swe-agent/.env'
+minisweagent: INFO: Results will be saved to /home/rapha/agentswe/out9_mini     
+Logging to '/home/rapha/agentswe/out9_mini/minisweagent.log'
+minisweagent: INFO: Loading dataset princeton-nlp/SWE-Bench_Verified, split     
+test...                                                                         
+minisweagent: INFO: Instance filter: 500 -> 10 instances                        
+minisweagent: INFO: Running on 10 instances...                                  
+minisweagent: INFO: Building agent config from specs: ['swebench.yaml',         
+'bench_local7.yaml']                                                            
+minisweagent.environment: DEBUG: Starting container with command: docker run -d 
+--name minisweagent-c2aba828 -w /testbed --rm                                   
+docker.io/swebench/sweb.eval.x86_64.pallets_1776_flask-5014:latest sleep 2h     
+minisweagent.environment: INFO: Started container minisweagent-c2aba828 with ID 
+37592c01749017cd1a0b855cb11ef5ab89947841615b72fad89b726270ce05fc                
