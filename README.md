@@ -89,3 +89,5 @@ python3 hb.py run    --harness pi        # 10-instance sweep (+telemetry)
 python3 hb.py eval   --harness pi        # official grading of out/pi/preds.json
 python3 hb.py report                     # leaderboard-style table
 ```
+
+**Cross-run view:** see [LEADERBOARD.md](LEADERBOARD.md) — best score per harness per model/bench, aggregated across all runs.
