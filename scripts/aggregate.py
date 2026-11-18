@@ -87,6 +87,7 @@ def grouped_bar(metric, ylabel, title, fname, pct=False):
             ax.text(x, v + (1 if pct else max(vals) * 0.02), f"{v:.0f}" if pct else f"{v:.1f}", ha="center", fontsize=8)
     ax.set_xticks(range(len(raw_h))); ax.set_xticklabels([NAME.get(h, h) for h in raw_h])
     if pct: ax.set_ylim(0, 100)
+    else: ax.set_ylim(0, max(max(100 * 0 + best[(m, b, h)][metric] for m, b in groups for h in raw_h if (m, b, h) in best), 1) * 1.15)
     ax.set_ylabel(ylabel); ax.set_title(title)
     ax.legend(fontsize=8); ax.grid(axis="y", alpha=.3)
     os.makedirs("charts", exist_ok=True)
