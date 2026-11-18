@@ -46,4 +46,5 @@
 ## Caveats
 - **Absolute scores are inflated by training-set memorization**: all 40 instances are classic pre-2022 SWE-bench cases; Qwen-class models have seen them. The *ranking* is still valid — contamination is held constant across harnesses — but do not read 35/40 as a general SWE-bench Verified score.
 - Absolute token/cost numbers include llama-swap ring snapshots taken during each harness window (same method as the n=10 run).
+- The nightly Hindsight consolidation job ran ~01:13-02:50 UTC, i.e. **inside the Pi phase**, issuing its own strata_iq3s calls through llama-swap (~37 min, 1 slot). Pi wall-time and token/call totals are therefore slightly inflated (low single-digit %); resolved counts and the ranking are unaffected.
 - Raw `activity.jsonl` telemetry (26–83 MB per harness) is kept on the rig, not committed.
