@@ -13,3 +13,4 @@ data/       # consolidated results.json + official eval JSONs + preds + raw tele
 ```
 
 To add a run: `hb.py run --harness <name>` → `hb.py eval --harness <name>` → run `scripts/consolidate.py` + `scripts/render_charts.py` → write `run.md`, link it here.
+| 2026-11-18 | strata_iq3s | 40 Verified | OpenCode 35 ≈ Claude Code 34 (tied); Claude Code most efficient (5.22/GPU-h); mini 26 & dsh 24 significantly behind | [run](runs/2026-11-18-strata-iq3s-sb40-5way/run.md) |
