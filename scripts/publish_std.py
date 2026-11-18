@@ -23,12 +23,12 @@ def mcnemar(R, H):
 
 def fmt_tok(x): return f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"
 
-def run_md(run, title, bench, card, findings, caveats):
+def run_md(run, title, bench, question, card, findings, caveats):
     R = json.load(open(f"runs/{run}/data/results.json"))
     n = R["instances"] if isinstance(R["instances"], int) else len(R["instances"])
     H = sorted(R["harnesses"], key=lambda h: -R["harnesses"][h]["resolved"])
     L = [f"# Run {title}", "",
-         f"**Question:** what does this {bench} run measure?", ""]
+         f"**Question:** {question}", ""]
     L += ["## Run card", "", "| | |", "|---|---|"] + [f"| {k} | {v} |" for k, v in card.items()] + [""]
     L += ["## Results", "",
           "| Harness | Resolved | Empty patches | Wall (sum) | LLM calls | Input tok | Output tok | Resolved/GPU-h |",
@@ -58,6 +58,7 @@ R10 = json.load(open("runs/2026-11-17-strata-iq3s-sb10-5way/data/results.json"))
 run_md("2026-11-17-strata-iq3s-sb10-5way",
        "2026-11-17 — strata_iq3s × 5 harnesses, SWE-bench Verified (10)",
        "SWE-bench Verified, 10 instances",
+       "with the *model held fixed*, which coding harness gets the most solved tasks per unit of work?",
        {"Date": "2026-11-17 (sweep 07:40 → 10:48 UTC, grading until 12:29)",
         "Model (fixed)": "`strata_iq3s` (Qwen3.8-27B IQ3_S) via llama-swap `127.0.0.1:8080`",
         "Serving": "strata 0.2.13, `--context 128k --parallel 2 --kv k8v4 --mtp`, workers=1",
@@ -78,6 +79,7 @@ R40 = json.load(open("runs/2026-11-18-strata-iq3s-sb40-5way/data/results.json"))
 run_md("2026-11-18-strata-iq3s-sb40-5way",
        "2026-11-18 — strata_iq3s × 5 harnesses, SWE-bench Verified (40)",
        "SWE-bench Verified, 40 instances (10 from sb10 + 30 new, stratified by difficulty, max 3/repo, seed 42)",
+       "at n=40, do we have enough data points to distinguish a clear leader among the harnesses?",
        {"Date": "2026-11-17 13:31 → 2026-11-18 11:10 UTC (sweep + grading)",
         "Model (fixed)": "`strata_iq3s` (Qwen3.8-27B IQ3_S) via llama-swap, `--parallel 2`, 128k ctx, MTP",
         "Dataset": "40 SWE-bench Verified instances (`sb40_new.json`)",

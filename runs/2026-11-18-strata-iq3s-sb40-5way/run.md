@@ -1,6 +1,6 @@
 # Run 2026-11-18 — strata_iq3s × 5 harnesses, SWE-bench Verified (40)
 
-**Question:** what does this SWE-bench Verified, 40 instances (10 from sb10 + 30 new, stratified by difficulty, max 3/repo, seed 42) run measure?
+**Question:** at n=40, do we have enough data points to distinguish a clear leader among the harnesses?
 
 ## Run card
 

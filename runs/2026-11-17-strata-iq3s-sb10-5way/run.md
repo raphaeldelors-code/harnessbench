@@ -1,6 +1,6 @@
 # Run 2026-11-17 — strata_iq3s × 5 harnesses, SWE-bench Verified (10)
 
-**Question:** what does this SWE-bench Verified, 10 instances run measure?
+**Question:** with the *model held fixed*, which coding harness gets the most solved tasks per unit of work?
 
 ## Run card
 
