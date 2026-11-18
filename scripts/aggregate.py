@@ -56,16 +56,17 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 groups = sorted({(m, b) for (m, b, _) in best})
-harnesses = sorted({NAME.get(h, h) for (_, _, h) in best})
+raw_h = sorted({h for (_, _, h) in best})
 fig, ax = plt.subplots(figsize=(10, 5))
 w = 0.8 / max(1, len(groups))
 for gi, (m, b) in enumerate(groups):
-    vals = [100 * best[(m, b, h)]["rate"] if (m, b, h) in best else 0 for h in harnesses]
-    xs = [i + gi * w - 0.4 + w / 2 for i in range(len(harnesses))]
+    vals = [100 * best[(m, b, h)]["rate"] for h in raw_h if (m, b, h) in best]
+    xs = [raw_h.index(h) + gi * w - 0.4 + w / 2 for h in raw_h if (m, b, h) in best]
     ax.bar(xs, vals, width=w, label=f"{m} · {BENCH_NAME.get(b, b)}")
     for x, v in zip(xs, vals):
-        if v: ax.text(x, v + 1, f"{v:.0f}", ha="center", fontsize=8)
-ax.set_xticks(range(len(harnesses))); ax.set_xticklabels(harnesses)
+        ax.text(x, v + 1, f"{v:.0f}", ha="center", fontsize=8)
+ax.set_xticks(range(len(raw_h))); ax.set_xticklabels([NAME.get(h, h) for h in raw_h])
+ax.set_ylim(0, 100)
 ax.set_ylabel("resolved % (best per harness)")
 ax.set_title("Cross-run best score per harness")
 ax.legend(fontsize=8); ax.grid(axis="y", alpha=.3)
