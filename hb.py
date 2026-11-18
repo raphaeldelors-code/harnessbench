@@ -94,7 +94,60 @@ HARNESSES = {
     ),
     "env": {},
   },
+  "codex": {
+    "version": "?",
+    "homes": True,
+    "cmd": lambda task: (
+      "printf %s \"$HB_TASK\" | codex exec --json --dangerously-bypass-approvals-and-sandbox"
+    ),
+    "env": {"OPENAI_API_KEY": "***"},
+  },
+  "qwen-code": {
+    "version": "?",
+    "homes": True,
+    "cmd": lambda task: (
+      "qwen -y -p \"$HB_TASK\""
+    ),
+    "env": {"OPENAI_API_KEY": "***", "OPENAI_BASE_URL": "http://127.0.0.1:8080/v1",
+            "OPENAI_MODEL": MODEL, "QWEN_CODE_SUPPRESS_YOLO_WARNING": "1"},
+  },
+  "kimi-code": {
+    "version": "?",
+    "homes": True,
+    "cmd": lambda task: (
+      "kimi -p \"$HB_TASK\" --output-format stream-json"
+    ),
+    "env": {},
+  },
+  "grok": {
+    "version": "?",
+    "homes": True,
+    "cmd": lambda task: (
+      "grok -p \"$HB_TASK\" --always-approve --output-format json --disable-web-search"
+    ),
+    "env": {},
+  },
+  "openclaw": {
+    "version": "?",
+    "homes": True,
+    "cmd": lambda task: (
+      "openclaw agent --local --json --timeout 2100 --session-id \"hb-$(date +%s%N)\" -m \"$HB_TASK\""
+    ),
+    "env": {},
+  },
+  "hermes-agent": {
+    "version": "?",
+    "homes": True,
+    "image": "nousresearch/hermes-agent:latest",
+    "wd": "/testbed",
+    "cmd": lambda task: (
+      '/opt/hermes/bin/hermes -z "$HB_TASK" --yolo'
+    ),
+    "env": {"HERMES_HOME": "/root", "HERMES_WRITE_SAFE_ROOT": "/testbed"},
+  },
 }
+
+
 # mini-swe-agent runs from the host via its own swebench integration
 MINI_CMD = [VENV, "-m", "minisweagent.run.benchmarks.swebench",
             "-o", None, "-m", "openai/" + MODEL, "-c", "swebench.yaml",
@@ -165,6 +218,9 @@ def run_container_harness(harness, iid, tag):
     wd = make_workdir(iid)
     od = os.path.join(WORK, iid, "out", harness)
     os.makedirs(od, exist_ok=True)
+    if spec.get("image"):
+        for d in (wd, od):
+            subprocess.run(["chmod", "-R", "a+rwX", d])
     if not RESUME.get("on", False):
         purge_contents(od); purge_contents(os.path.join(WORK, iid, "repo"))
     home = os.path.join(HB, "homes", harness)
@@ -188,8 +244,13 @@ def run_container_harness(harness, iid, tag):
               "-v", f"{home}:/root",
               "-e", "HOME=/root",
               "-e", f"PATH={NODE_PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"]
+    if spec.get("wd"): docker += ["-w", spec["wd"]]
     docker += envargs
-    docker += [eval_image(iid), "bash", "-c", inner]
+    img = spec.get("image") or eval_image(iid)
+    if spec.get("image"):
+        docker += ["--entrypoint", "bash", img, "-c", inner]
+    else:
+        docker += [img, "bash", "-c", inner]
     t0 = time.time()
     p = subprocess.run(docker, capture_output=True, text=True, timeout=RUN_TIMEOUT + 180)
     wall = time.time() - t0
@@ -329,6 +390,9 @@ def cmd_smoke(a):
     sh(["git", "init", "-q"], cwd=wd); sh(["git", "add", "-A"], cwd=wd)
     sh(["git", "-c", "user.email=hb@hb", "-c", "user.name=hb", "commit", "-qm", "init"], cwd=wd)
     spec = HARNESSES[a.harness]
+    if spec.get("image"):
+        for d in (wd, os.path.join(WORK, "_smoke_out", a.harness)):
+            subprocess.run(["chmod", "-R", "a+rwX", d])
     task = "In /testbed there is a python file buggy.py with a broken add(). Fix it so that running 'python3 test_buggy.py' prints OK. Leave the fix in the working tree."
     inner = ("git config --global --add safe.directory /testbed; mkdir -p /out; cd /testbed; "
              f"timeout 300 {spec['cmd'](None)} > /out/traj.log 2>/out/err.log; EC=$?; echo $EC > /out/ec; "
@@ -341,7 +405,11 @@ def cmd_smoke(a):
               "-e", f"PATH={NODE_PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"]
     for k, v in spec["env"].items(): docker += ["-e", f"{k}={v}"]
     docker += ["-e", f"HB_TASK={task}"]
-    docker += ["swebench/sweb.eval.x86_64.psf_1776_requests-1142:latest", "bash", "-c", inner]
+    img = spec.get("image") or "swebench/sweb.eval.x86_64.psf_1776_requests-1142:latest"
+    if spec.get("image"):
+        docker += ["--entrypoint", "bash", img, "-c", inner]
+    else:
+        docker += [img, "bash", "-c", inner]
     p = subprocess.run(docker, capture_output=True, text=True, timeout=420)
     print("docker rc=", p.returncode, "| stdout:", p.stdout[-200:], "| stderr:", p.stderr[-200:])
     od = f"{WORK}/_smoke_out/{a.harness}"
