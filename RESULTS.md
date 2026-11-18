@@ -3,6 +3,7 @@
 | Date | Run | Question | Model | Harnesses | Verdict |
 |---|---|---|---|---|---|
 | 2026-11-17 | [strata_iq3s × 5 harnesses, SWE-bench Verified (10)](runs/2026-11-17-strata-iq3s-sb10-5way/run.md) | Which harness is most efficient with a fixed local model? | strata_iq3s | Claude Code · DeepSeek TUI · mini-swe · OpenCode · Pi | Same 5/10 pass rate for all; **OpenCode best per GPU-hour (6.2)**, **mini-swe leanest on tokens**, **Claude Code most reliable (0 empty patches)**, Pi slowest. |
+| 2026-11-18 | [strata_iq3s × 5 harnesses, SWE-bench Verified (40)](runs/2026-11-18-strata-iq3s-sb40-5way/run.md) | Enough data points to pick a leader? | strata_iq3s | Claude Code · DeepSeek TUI · mini-swe · OpenCode · Pi | **OpenCode 35/40 ≈ Claude Code 34/40 (statistical tie, p=1.0)**; Claude Code most efficient (5.22 res/GPU-h, 0 empty patches); Pi 32 solid third; **mini 26 & dsh 24 significantly behind (p<0.05)**. |
 
 Each run lives in its own directory under `runs/<date>-<slug>/`:
 
@@ -13,4 +14,3 @@ data/       # consolidated results.json + official eval JSONs + preds + raw tele
 ```
 
 To add a run: `hb.py run --harness <name>` → `hb.py eval --harness <name>` → run `scripts/consolidate.py` + `scripts/render_charts.py` → write `run.md`, link it here.
-| 2026-11-18 | strata_iq3s | 40 Verified | OpenCode 35 ≈ Claude Code 34 (tied); Claude Code most efficient (5.22/GPU-h); mini 26 & dsh 24 significantly behind | [run](runs/2026-11-18-strata-iq3s-sb40-5way/run.md) |
