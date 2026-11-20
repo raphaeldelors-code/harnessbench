@@ -85,7 +85,7 @@
         <div class="chart-box"><canvas id="cTokps"></canvas></div>
       </div>
       <div class="card">
-        <h2>Per-instance wall <span class="sub">solid bar = p10–p90 · dot = median, minutes</span></h2>
+        <h2>Per-instance wall <span class="sub">candle = p10–p90 · white tick = median, minutes</span></h2>
         <div class="chart-box"><canvas id="cDist"></canvas></div>
         <p class="dim" id="distNote" hidden></p>
       </div>
@@ -95,7 +95,7 @@
       </div>
       <div class="card wide">
         <h2>Pairwise significance <span class="sub">McNemar exact p — green: row harness wins, red: loses</span></h2>
-        <div class="chart-box hm"><canvas id="cMc"></canvas></div>
+        <div class="chart-box tall hm"><canvas id="cMc"></canvas></div>
       </div>
       <details class="card wide repro">
         <summary>Run reproducibility <span class="sub">exact component versions + config</span></summary>

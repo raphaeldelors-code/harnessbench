@@ -314,17 +314,27 @@ function distChart(){
   const dn=$("#distNote");
   if(dn){ dn.hidden=!dropped.length; dn.textContent=dropped.length?`Excluded (fewer than 5 timed instances): ${dropped.join(", ")}`:""; }
   const narrow=narrowBox("#cDist");
+  const candle={id:"candles",afterDatasetsDraw(c){
+    const xs=c.scales.x, ys=c.scales.y, g=c.ctx;   // x = category, y = minutes (vertical bars house style)
+    rows.forEach((x,i)=>{
+      const xc=xs.getPixelForValue(i), y1=ys.getPixelForValue(x.lo), y2=ys.getPixelForValue(x.hi), ym=ys.getPixelForValue(x.med);
+      // candle body (p10–p90)
+      g.save(); g.fillStyle=color(x.h);
+      g.beginPath(); g.roundRect(xc-7, Math.min(y1,y2), 14, Math.max(2,Math.abs(y2-y1)), 4); g.fill();
+      // median tick: always wider than the body so it can never hide inside the candle
+      g.strokeStyle="#f2f5fa"; g.lineWidth=2.5; g.lineCap="round";
+      g.beginPath(); g.moveTo(xc-11, ym); g.lineTo(xc+11, ym); g.stroke();
+      g.restore(); });
+  }};
   mkChart("#cDist",{data:{labels:rows.map(x=>lab(x.h,narrow)),
     datasets:[
       {type:"bar",label:"p10–p90",data:rows.map(x=>[x.lo,x.hi]),
-       backgroundColor:rows.map(x=>color(x.h)),borderRadius:8,maxBarThickness:46},
-      {type:"line",label:"median",data:rows.map(x=>x.med),
-       showLine:false,pointRadius:5,pointHoverRadius:6,
-       pointBackgroundColor:rows.map(x=>color(x.h)),pointBorderColor:"#0a0d13",pointBorderWidth:2}]},
-    options:{...baseOpts, plugins:{...baseOpts.plugins,
+       backgroundColor:"rgba(0,0,0,0)",borderWidth:0,maxBarThickness:26}]},
+    options:{...baseOpts, interaction:{mode:"index",intersect:false},
+      plugins:{...baseOpts.plugins, legend:{display:false},
       tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>{const x=rows[c.dataIndex];
         return `p10 ${x.lo.toFixed(1)} · median ${x.med.toFixed(1)} · p90 ${x.hi.toFixed(1)} min`;}}}},
-      scales:scaled(narrow,"minutes (per instance)")}});
+      scales:scaled(narrow,"minutes (per instance)")}, plugins:[candle]});
 }
 
 /* ---------- calibration ---------- */
