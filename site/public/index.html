@@ -13,54 +13,123 @@
   <div class="brand"><span class="logo">⚡</span><h1>Harness<span>Bench</span></h1>
     <p class="tag">one model · many harnesses · fully local</p>
   </div>
-  <nav id="runTabs" class="tabs"></nav>
+  <nav id="secNav" class="tabs">
+    <a class="tab" data-sec="overview" href="#overview">Overview</a>
+    <a class="tab" data-sec="runs" href="#runs">Runs</a>
+    <a class="tab" data-sec="rig" href="#rig">Rig</a>
+    <a class="tab" data-sec="calibration" href="#calibration">Calibration</a>
+    <a class="tab" data-sec="methodology" href="#methodology">Methodology</a>
+  </nav>
 </header>
 
 <main>
   <section class="hero" id="hero"></section>
 
-  <section class="filters">
-    <span class="filters-label">Harnesses</span>
-    <div id="chips" class="chips"></div>
-    <button id="chipAll" class="chip-btn">all</button>
+  <!-- ===== OVERVIEW (default): cross-run aggregation ===== -->
+  <section class="panel" id="sec-overview">
+    <div class="grid">
+      <div class="card wide">
+        <h2>Leaderboard <span class="sub">best resolved % per harness across all runs</span></h2>
+        <div class="chart-box"><canvas id="oResolved"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Effort <span class="sub">M input tokens (best run)</span></h2>
+        <div class="chart-box"><canvas id="oTok"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Throughput <span class="sub">resolved / GPU-hour (best run)</span></h2>
+        <div class="chart-box"><canvas id="oThr"></canvas></div>
+      </div>
+      <div class="card wide">
+        <h2>Cohort map <span class="sub">which harness was measured on which run (bar = best)</span></h2>
+        <div id="cohortTable" class="table-wrap"></div>
+      </div>
+    </div>
   </section>
 
-  <section class="grid">
-    <div class="card wide">
-      <h2>Resolved instances</h2>
-      <div class="chart-box"><canvas id="cResolved"></canvas></div>
+  <!-- ===== RUNS: per-run deep dive ===== -->
+  <section class="panel" id="sec-runs" hidden>
+    <nav id="runTabs" class="tabs run-tabs"></nav>
+    <div class="filters">
+      <span class="filters-label">Harnesses</span>
+      <div id="chips" class="chips"></div>
+      <button id="chipAll" class="chip-btn">all</button>
     </div>
-    <div class="card">
-      <h2>Throughput <span class="sub">resolved / GPU-hour</span></h2>
-      <div class="chart-box"><canvas id="cThr"></canvas></div>
+    <div class="grid">
+      <div class="card wide">
+        <h2>Resolved instances</h2>
+        <div class="chart-box"><canvas id="cResolved"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Throughput <span class="sub">resolved / GPU-hour</span></h2>
+        <div class="chart-box"><canvas id="cThr"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Effort <span class="sub">input tokens (M)</span></h2>
+        <div class="chart-box"><canvas id="cTok"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Wall time per run <span class="sub">minutes</span></h2>
+        <div class="chart-box"><canvas id="cWall"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Per-instance wall <span class="sub">p10 / median / p90 minutes</span></h2>
+        <div class="chart-box"><canvas id="cDist"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Cache use <span class="sub">M cached input tokens</span></h2>
+        <div class="chart-box"><canvas id="cCache"></canvas></div>
+      </div>
+      <div class="card wide">
+        <h2>Instance grid <span class="sub">R = resolved, E = empty/failed patch</span></h2>
+        <div class="chart-box tall"><canvas id="cGrid"></canvas></div>
+      </div>
+      <div class="card wide">
+        <h2>Pairwise significance <span class="sub">McNemar exact p — green: row harness wins, red: loses</span></h2>
+        <div class="chart-box"><canvas id="cMc"></canvas></div>
+      </div>
+      <details class="card wide repro">
+        <summary>Run reproducibility <span class="sub">exact component versions + config</span></summary>
+        <div id="versions" class="versions"></div>
+      </details>
     </div>
-    <div class="card">
-      <h2>Effort <span class="sub">input tokens (M)</span></h2>
-      <div class="chart-box"><canvas id="cTok"></canvas></div>
+  </section>
+
+  <!-- ===== RIG ===== -->
+  <section class="panel" id="sec-rig" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h2>Bench rig <span class="sub">every published run used this machine</span></h2>
+        <div id="rigBody" class="versions"></div>
+      </div>
     </div>
-    <div class="card">
-      <h2>Wall time per run <span class="sub">minutes</span></h2>
-      <div class="chart-box"><canvas id="cWall"></canvas></div>
+  </section>
+
+  <!-- ===== CALIBRATION ===== -->
+  <section class="panel" id="sec-calibration" hidden>
+    <div class="grid">
+      <div class="card wide">
+        <h2>Engine calibration <span class="sub">strata engine calibrate — measure → apply → verify bench before/after</span></h2>
+        <div id="tuneBody" class="versions"></div>
+      </div>
     </div>
-    <div class="card">
-      <h2>Per-instance wall <span class="sub">minutes per instance</span></h2>
-      <div class="chart-box"><canvas id="cDist"></canvas></div>
-    </div>
-    <div class="card wide">
-      <h2>Instance grid <span class="sub">R = resolved, E = empty/failed patch</span></h2>
-      <div class="chart-box" style="height:auto"><canvas id="cGrid"></canvas></div>
-    </div>
-    <div class="card wide">
-      <h2>Pairwise significance <span class="sub">McNemar exact p — green: row harness wins, red: loses</span></h2>
-      <div class="chart-box" style="height:auto"><canvas id="cMc"></canvas></div>
-    </div>
-    <div class="card wide" id="tuneCard" style="display:none">
-      <h2>Engine calibration <span class="sub">strata engine calibrate — measure → apply → verified with bench before/after</span></h2>
-      <div id="tuneBody" class="versions"></div>
-    </div>
-    <div class="card wide">
-      <h2>Run reproducibility <span class="sub">exact component versions + config</span></h2>
-      <div id="versions" class="versions"></div>
+  </section>
+
+  <!-- ===== METHODOLOGY ===== -->
+  <section class="panel" id="sec-methodology" hidden>
+    <div class="grid">
+      <div class="card wide prose">
+        <h2>Methodology</h2>
+        <ul>
+          <li><b>Fixed model, variable harness.</b> One local model (Strata Qwen3.8-Flash-Next IQ3_S served by llama-swap, exclusive GPU) is driven by 11 coding-agent harnesses. Only the agent scaffolding changes.</li>
+          <li><b>Shared task statement.</b> Every harness receives byte-identical task text; harness-native system prompts otherwise untouched.</li>
+          <li><b>Official grading.</b> Captured patches are re-applied and graded inside official SWE-bench eval containers (fail-to-pass + pass-to-pass tests), in isolation, with exact test logs.</li>
+          <li><b>Deterministic dataset.</b> A fixed instance subset per cohort; cohorts with the same subset are directly comparable (see cohort map).</li>
+          <li><b>Significance.</b> Pairwise exact two-sided McNemar on discordant resolved counts (heat map in each run).</li>
+          <li><b>Telemetry.</b> Per-instance wall windows and llama-swap token counters (input / output / cache) recorded for every attempt.</li>
+          <li><b>Reproducible.</b> Each run stores an <code>run.json</code> manifest + exact component versions; raw preds are gzip-persisted.</li>
+        </ul>
+      </div>
     </div>
   </section>
 

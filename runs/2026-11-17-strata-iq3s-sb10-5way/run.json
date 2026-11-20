@@ -1,0 +1,16 @@
+{
+  "schema_version": "hb-run-v1",
+  "id": "2026-11-17-strata-iq3s-sb10-5way",
+  "date": "2026-11-17",
+  "model": "strata_iq3s",
+  "hardware": "bench-rig-01",
+  "harnesses": ["claude-code", "deepseek-harness", "mini", "opencode", "pi"],
+  "dataset": {
+    "name": "SWE-bench Lite subset",
+    "instances": 10,
+    "source": "princeton-nlp/SWE-bench_Lite, deterministic first-10 subset"
+  },
+  "workers": 2,
+  "seed": 0,
+  "notes": "Cross-harness pilot; shared task statement; official SWE-bench test harness in eval containers."
+}

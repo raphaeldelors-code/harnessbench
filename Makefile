@@ -1,7 +1,7 @@
 .PHONY: install lint build serve smoke validate bench-smoke
 
 install:            ## set up dev tooling + pre-commit hooks
-	python3 -m pip install -r requirements-dev.txt
+	python3 -m pip install -e . -r requirements-dev.txt
 	pre-commit install
 
 lint:               ## run every hook over the whole tree

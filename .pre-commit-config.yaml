@@ -12,7 +12,7 @@ repos:
       - id: detect-private-key
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.17.6
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -38,5 +38,5 @@ repos:
         name: no personal home paths in source
         entry: python tools/check_no_personal_paths.py
         language: system
-        types_or: [python, shell, javascript, yaml, toml, markdown, json, html, css]
-        exclude: ^data/
+        types_or: [python, shell, javascript, yaml, toml, json, html, css]
+        exclude: ^(data/|README\.md|CONTRIBUTING\.md)

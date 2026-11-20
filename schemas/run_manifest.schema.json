@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "harnessbench run manifest",
+  "type": "object",
+  "required": ["schema_version", "id", "date", "model", "hardware", "dataset"],
+  "properties": {
+    "schema_version": {"const": "hb-run-v1"},
+    "id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+"},
+    "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "model": {"type": "string"},
+    "hardware": {"type": "string"},
+    "harnesses": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "dataset": {
+      "type": "object",
+      "required": ["name", "instances"],
+      "properties": {
+        "name": {"type": "string"},
+        "instances": {"type": "integer", "minimum": 1},
+        "source": {"type": "string"}
+      }
+    },
+    "workers": {"type": "integer", "minimum": 1},
+    "seed": {"type": "integer"},
+    "notes": {"type": "string"}
+  }
+}

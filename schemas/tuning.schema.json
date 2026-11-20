@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "engine calibration record",
+  "type": "object",
+  "required": ["status"],
+  "properties": {
+    "status": {"type": "string"},
+    "decoding": {
+      "type": "object",
+      "properties": {
+        "baseline_tps": {"type": "number"},
+        "candidates": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "applied": {"type": "string"},
+    "compare": {"type": "object"}
+  }
+}

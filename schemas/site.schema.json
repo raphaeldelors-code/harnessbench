@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "site.json aggregation",
+  "type": "object",
+  "required": ["generated", "hardware", "runs"],
+  "properties": {
+    "generated": {"type": "string"},
+    "hardware": {"type": "object"},
+    "runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "date", "model", "n_instances", "instances", "harnesses", "mcnemar"],
+        "properties": {
+          "id": {"type": "string"},
+          "n_instances": {"type": "integer", "minimum": 1},
+          "harnesses": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "object",
+              "required": ["resolved"],
+              "properties": {"resolved": {"type": "integer", "minimum": 0}}
+            }
+          },
+          "windows": {"type": "object"},
+          "mcnemar": {"type": "object", "minProperties": 1}
+        }
+      }
+    }
+  }
+}

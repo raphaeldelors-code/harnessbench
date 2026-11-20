@@ -1,0 +1,57 @@
+# harnessbench backend — dependency injection seam.
+#
+# Option A (default): `docker compose up llamaswap` spins up a containerised
+#   llama-swap + engine on port 8080.
+# Option B: point the runner at an existing endpoint:
+#   export HB_BACKEND_URL=http://your-host:8080 HB_MODEL=your-model
+#   (skip `docker compose up` entirely)
+#
+# Either way the bench container receives HB_CONTAINER_BACKEND_URL, which must
+# be reachable *from inside* the bench container (host.docker.internal, not
+# 127.0.0.1, when the backend runs on the host).
+
+services:
+  llamaswap:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.llamaswap
+      args:
+        BASE_IMAGE: ghcr.io/ggml-org/llama.cpp:server-cuda
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ${HB_MODEL_DIR:-./models}:/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      HB_MODEL: ${HB_MODEL:-strata_iq3s}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/v1/models || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  bench:
+    image: python:3.12-slim
+    profiles: ["bench"]
+    depends_on:
+      llamaswap:
+        condition: service_healthy
+    volumes:
+      - ..:/app
+      - ${HB_RUNTIME_DIR:-~/.harnessbench/runtime}:/opt/hb:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /app
+    environment:
+      HB_BACKEND_URL: http://llamaswap:8080
+      HB_CONTAINER_BACKEND_URL: http://host.docker.internal:8080
+      HB_MODEL: ${HB_MODEL:-strata_iq3s}
+      HB_HOME: /opt/hb
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["bash", "-c", "pip install -e . && hb report"]

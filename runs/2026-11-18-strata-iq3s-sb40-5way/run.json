@@ -1,0 +1,16 @@
+{
+  "schema_version": "hb-run-v1",
+  "id": "2026-11-18-strata-iq3s-sb40-5way",
+  "date": "2026-11-18",
+  "model": "strata_iq3s",
+  "hardware": "bench-rig-01",
+  "harnesses": ["claude-code", "deepseek-harness", "mini", "opencode", "pi"],
+  "dataset": {
+    "name": "SWE-bench Lite subset",
+    "instances": 40,
+    "source": "princeton-nlp/SWE-bench_Lite, deterministic 40-instance subset"
+  },
+  "workers": 2,
+  "seed": 0,
+  "notes": "Shared task statement across all five harnesses; official SWE-bench grading in per-instance eval containers."
+}

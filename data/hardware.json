@@ -1,0 +1,24 @@
+{
+  "id": "bench-rig-01",
+  "description": "Single-GPU workstation rig used for every published run.",
+  "cpu": {
+    "model": "AMD Ryzen 5 5600G with Radeon Graphics (6C/12T)",
+    "cores": 12
+  },
+  "memory": {
+    "size_gib": 64,
+    "speed_mt_s": 3600,
+    "channels": "2 x 32 GB DDR4"
+  },
+  "gpu": {
+    "model": "NVIDIA GeForce RTX 3090",
+    "vram_gib": 24,
+    "pcie_generation": "Gen4 (8 GT/s)",
+    "pcie_lanes": "x16 (link capability and negotiated state)"
+  },
+  "board": "ASRock B550 Phantom Gaming-ITX/ax",
+  "storage_note": "models and SWE-bench eval images on local NVMe",
+  "os": "Ubuntu 26.04 LTS, kernel 7.0, Docker Engine",
+  "served_by": "llama-swap (single-model, exclusive)",
+  "updated_utc": "2026-11-20"
+}

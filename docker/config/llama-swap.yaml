@@ -1,0 +1,21 @@
+# Example llama-swap config used by the harnessbench compose backend.
+# Drop your GGUF in HB_MODEL_DIR and rename to model.gguf, or edit the cmd.
+model_config:
+  - name: bench-model
+    parameters:
+      model: /models/model.gguf
+      ctx-size: 131072
+      n-gpu-layers: 99
+      flash-attn: va
+    cmd: llama-server
+    args:
+      - --model
+      - "{{ .Model }}"
+      - --port
+      - "{{ .Port }}"
+      - --ctx-size
+      - "{{ .CtxSize }}"
+      - --n-gpu-layers
+      - "{{ .NGPULayers }}"
+      - --flash-attn
+      - "{{ .FlashAttn }}"

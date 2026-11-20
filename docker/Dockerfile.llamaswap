@@ -1,0 +1,17 @@
+ARG BASE_IMAGE=ghcr.io/ggml-org/llama.cpp:server-cuda
+FROM ${BASE_IMAGE}
+
+# llama-swap: model router used by harnessbench (mostlygeek/llama-swap, pinned)
+ARG LLAMA_SWAP_TAG=v275
+ARG LLAMA_SWAP_ASSET=llama-swap_275_linux_amd64.tar.gz
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+ && curl -fsSL "https://github.com/mostlygeek/llama-swap/releases/download/${LLAMA_SWAP_TAG}/${LLAMA_SWAP_ASSET}" \
+      -o /tmp/llama-swap.tgz \
+ && tar -xzf /tmp/llama-swap.tgz -C /usr/local/bin llama-swap \
+ && rm /tmp/llama-swap.tgz \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY config/llama-swap.yaml /app/config.yaml
+ENV LlamaSwap_ConfigFile=/app/config.yaml
+EXPOSE 8080
+ENTRYPOINT ["llama-swap"]

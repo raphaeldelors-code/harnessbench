@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "harnessbench hardware record",
+  "type": "object",
+  "required": ["id", "cpu", "memory", "gpu"],
+  "properties": {
+    "id": {"type": "string"},
+    "description": {"type": "string"},
+    "cpu": {
+      "type": "object",
+      "required": ["model", "cores"],
+      "properties": {
+        "model": {"type": "string"},
+        "cores": {"type": "integer", "minimum": 1}
+      }
+    },
+    "memory": {
+      "type": "object",
+      "required": ["size_gib"],
+      "properties": {
+        "size_gib": {"type": "number", "minimum": 1},
+        "speed_mt_s": {"type": "number"},
+        "channels": {"type": "string"}
+      }
+    },
+    "gpu": {
+      "type": "object",
+      "required": ["model", "vram_gib"],
+      "properties": {
+        "model": {"type": "string"},
+        "vram_gib": {"type": "number", "minimum": 1},
+        "pcie_generation": {"type": "string"},
+        "pcie_lanes": {"type": "string"}
+      }
+    },
+    "board": {"type": "string"},
+    "os": {"type": "string"},
+    "served_by": {"type": "string"},
+    "updated_utc": {"type": "string"}
+  }
+}
