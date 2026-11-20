@@ -1,5 +1,7 @@
 # HarnessBench ⚡
 
+**[🐴 Live dashboard →](https://raphaeldelors-code.github.io/harnessbench/)** — animated leaderboard, McNemar heatmap, per-instance grid, cross-run best, reproducible version cards.
+
 **One local model. Many coding harnesses. Fully reproducible.**
 
 HarnessBench measures how much *the agent harness* matters when the model is fixed:
