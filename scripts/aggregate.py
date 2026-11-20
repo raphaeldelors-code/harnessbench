@@ -10,13 +10,14 @@ import glob, json, os, re
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 NAME = {"claude-code": "Claude Code", "deepseek-harness": "DeepSeek TUI",
         "mini": "mini-swe-agent", "opencode": "OpenCode", "pi": "Pi",
-        "kiro": "Kiro"}
+        "kiro": "Kiro", "codex": "Codex", "qwen-code": "Qwen Code", "kimi-code": "Kimi Code",
+        "grok": "Grok Build", "openclaw": "OpenClaw", "hermes-agent": "Hermes Agent"}
 BENCH_NAME = {"sb10": "SWE-bench Verified (10)", "sb40": "SWE-bench Verified (40)"}
 
 runs = []
 for d in sorted(glob.glob("runs/*/data/results.json")):
     slug = d.split("/")[1]
-    m = re.match(r"(\d{4}-\d{2}-\d{2})-(.*)-5way", slug)
+    m = re.match(r"(\d{4}-\d{2}-\d{2})-(.*?-sb\d+)-\d+way", slug)
     date, rest = m.group(1), m.group(2)
     parts = rest.split("-")
     bench = next((p for p in parts if re.fullmatch(r"sb\d+", p)), "?")
@@ -76,7 +77,7 @@ import matplotlib.pyplot as plt
 
 def grouped_bar(metric, ylabel, title, fname, pct=False):
     raw_h = sorted({h for (_, _, h) in best})
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(12.5, 5.5))
     wdt = 0.8 / max(1, len(groups))
     for gi, (m, b) in enumerate(groups):
         hs = [h for h in raw_h if (m, b, h) in best]
@@ -85,7 +86,7 @@ def grouped_bar(metric, ylabel, title, fname, pct=False):
         ax.bar(xs, vals, width=wdt, label=f"{m} · {BENCH_NAME.get(b, b)}")
         for x, v in zip(xs, vals):
             ax.text(x, v + (1 if pct else max(vals) * 0.02), f"{v:.0f}" if pct else f"{v:.1f}", ha="center", fontsize=8)
-    ax.set_xticks(range(len(raw_h))); ax.set_xticklabels([NAME.get(h, h) for h in raw_h])
+    ax.set_xticks(range(len(raw_h))); ax.set_xticklabels([NAME.get(h, h) for h in raw_h], rotation=40, ha="right", fontsize=8.5)
     if pct: ax.set_ylim(0, 100)
     else: ax.set_ylim(0, max(max(100 * 0 + best[(m, b, h)][metric] for m, b in groups for h in raw_h if (m, b, h) in best), 1) * 1.15)
     ax.set_ylabel(ylabel); ax.set_title(title)

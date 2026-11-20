@@ -6,7 +6,9 @@ Charts (fixed 6, fixed order) / Paired significance / Findings / Caveats / Data.
 import json, math, itertools, os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 NAME = {"claude-code": "Claude Code", "deepseek-harness": "DeepSeek TUI",
-        "mini": "mini-swe-agent", "opencode": "OpenCode", "pi": "Pi"}
+        "mini": "mini-swe-agent", "opencode": "OpenCode", "pi": "Pi",
+        "codex": "Codex", "qwen-code": "Qwen Code", "kimi-code": "Kimi Code",
+        "grok": "Grok Build", "openclaw": "OpenClaw", "hermes-agent": "Hermes Agent"}
 CHARTS = [("resolved.png", "Resolved instances"), ("resolved_per_gpu_h.png", "Efficiency"),
           ("wall_s.png", "Wall time (sum)"), ("input_tokens.png", "Input tokens"),
           ("calls.png", "LLM calls"), ("matrix.png", "Per-instance matrix")]
@@ -64,7 +66,7 @@ run_md("2026-11-17-strata-iq3s-sb10-5way",
         "Serving": "strata 0.2.13, `--context 128k --parallel 2 --kv k8v4 --mtp`, workers=1",
         "Dataset": "10 SWE-bench Verified instances (`sb10_new.json`)",
         "Grading": "official swebench F2P/P2P grader, **outside** the harness container",
-        "Agent loop": "headless, official `swebench/sweb.eval.x86_64.*` image, 1800 s timeout",
+        "Agent loop": "headless, official `swebench/sweb.eval.x86_64.*` image, 2700 s timeout",
         "Harnesses": "Claude Code 2.1.326 · DeepSeek TUI 0.2.2-rc.3 · mini-swe-agent 2.x · OpenCode 2.3.0 · Pi 1.5.2",
         "Telemetry": "llama-swap activity ring (per-request tokens) + per-instance wall windows"},
        ["**Pass rate is harness-insensitive at n=10** — all five solved the same 4 core instances; only divergence is the pylint tie (4604 vs 4551): sampling noise, not capability.",
@@ -84,7 +86,7 @@ run_md("2026-11-18-strata-iq3s-sb40-5way",
         "Model (fixed)": "`strata_iq3s` (Qwen3.8-27B IQ3_S) via llama-swap, `--parallel 2`, 128k ctx, MTP",
         "Dataset": "40 SWE-bench Verified instances (`sb40_new.json`)",
         "Grading": "official swebench F2P/P2P grader, **outside** the harness container",
-        "Agent loop": "headless, official `swebench/sweb.eval.x86_64.*` image, 1800 s timeout, workers=2",
+        "Agent loop": "headless, official `swebench/sweb.eval.x86_64.*` image, 2700 s timeout, workers=2",
         "Harnesses": "Claude Code 2.1.326 · DeepSeek TUI 0.2.2-rc.3 · mini-swe-agent 2.4.6 · OpenCode 2.3.0 · Pi 1.5.2",
         "Telemetry": "llama-swap activity ring (per-request tokens) + per-instance wall windows"},
        ["**Leader: OpenCode (35/40) ≈ Claude Code (34/40)** — statistically tied on correctness (1:0 discordant). **Claude Code wins on cost**: 6.5 h vs 8.5 h wall, 5.22 vs 4.13 resolved/GPU-h, 0 empty patches vs 2.",

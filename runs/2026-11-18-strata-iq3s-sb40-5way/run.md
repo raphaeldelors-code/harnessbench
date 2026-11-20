@@ -10,7 +10,7 @@
 | Model (fixed) | `strata_iq3s` (Qwen3.8-27B IQ3_S) via llama-swap, `--parallel 2`, 128k ctx, MTP |
 | Dataset | 40 SWE-bench Verified instances (`sb40_new.json`) |
 | Grading | official swebench F2P/P2P grader, **outside** the harness container |
-| Agent loop | headless, official `swebench/sweb.eval.x86_64.*` image, 1800 s timeout, workers=2 |
+| Agent loop | headless, official `swebench/sweb.eval.x86_64.*` image, 2700 s timeout, workers=2 |
 | Harnesses | Claude Code 2.1.326 · DeepSeek TUI 0.2.2-rc.3 · mini-swe-agent 2.4.6 · OpenCode 2.3.0 · Pi 1.5.2 |
 | Telemetry | llama-swap activity ring (per-request tokens) + per-instance wall windows |
 

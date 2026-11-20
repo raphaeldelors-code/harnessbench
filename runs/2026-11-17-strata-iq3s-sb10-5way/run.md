@@ -11,7 +11,7 @@
 | Serving | strata 0.2.13, `--context 128k --parallel 2 --kv k8v4 --mtp`, workers=1 |
 | Dataset | 10 SWE-bench Verified instances (`sb10_new.json`) |
 | Grading | official swebench F2P/P2P grader, **outside** the harness container |
-| Agent loop | headless, official `swebench/sweb.eval.x86_64.*` image, 1800 s timeout |
+| Agent loop | headless, official `swebench/sweb.eval.x86_64.*` image, 2700 s timeout |
 | Harnesses | Claude Code 2.1.326 · DeepSeek TUI 0.2.2-rc.3 · mini-swe-agent 2.x · OpenCode 2.3.0 · Pi 1.5.2 |
 | Telemetry | llama-swap activity ring (per-request tokens) + per-instance wall windows |
 
