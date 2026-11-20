@@ -1,0 +1,42 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-json
+        exclude: ^data/
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=4096"]
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: ^runs/.*preds_.*\.gz$
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
+    hooks:
+      - id: bandit
+        args: ["-c", "pyproject.toml", "-q"]
+        files: ^(bench|site|tools)/.*\.py$
+
+  - repo: local
+    hooks:
+      - id: no-personal-paths
+        name: no personal home paths in source
+        entry: python tools/check_no_personal_paths.py
+        language: system
+        types_or: [python, shell, javascript, yaml, toml, markdown, json, html, css]
+        exclude: ^data/

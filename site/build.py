@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Aggregate every runs/<id>/data/ into site/public/data/site.json for the dashboard."""
+
 import gzip
 import json
 import sys
@@ -43,22 +44,23 @@ def build():
             wins = read_jsonl(data / f"windows_{name}.jsonl")
             if wins:
                 windows[name] = [
-                    {"inst": w.get("inst") or w.get("instance"), "wall_s": w.get("wall_s"),
-                     "ec": w.get("ec")}
+                    {"inst": w.get("inst") or w.get("instance"), "wall_s": w.get("wall_s"), "ec": w.get("ec")}
                     for w in wins
                 ]
         versions = load(data / "versions.json") or {}
-        runs.append({
-            "id": run_dir.name,
-            "date": run_dir.name[:10],
-            "model": versions.get("model", "strata_iq3s"),
-            "n_instances": len(results["instances"]),
-            "instances": results["instances"],
-            "harnesses": harnesses,
-            "windows": windows,
-            "mcnemar": results.get("mcnemar", {}),
-            "versions": versions,
-        })
+        runs.append(
+            {
+                "id": run_dir.name,
+                "date": run_dir.name[:10],
+                "model": versions.get("model", "strata_iq3s"),
+                "n_instances": len(results["instances"]),
+                "instances": results["instances"],
+                "harnesses": harnesses,
+                "windows": windows,
+                "mcnemar": results.get("mcnemar", {}),
+                "versions": versions,
+            }
+        )
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({"generated": str(pd_today()), "runs": runs}, separators=(",", ":")))
     print(f"wrote {OUT} ({OUT.stat().st_size} bytes, {len(runs)} runs)")
@@ -66,7 +68,8 @@ def build():
 
 def pd_today():
     import datetime
-    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    return datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M UTC")
 
 
 if __name__ == "__main__":

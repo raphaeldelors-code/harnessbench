@@ -1,0 +1,26 @@
+[project]
+name = "harnessbench"
+version = "0.4.0"
+description = "Coding-agent harness arena: fixed local model, many harnesses, fully reproducible SWE-bench Verified runs."
+requires-python = ">=3.11"
+
+[project.scripts]
+hb = "bench.cli:main"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = ["site/public/vendor", "data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4"]
+ignore = ["E501", "E741"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
+
+[tool.ruff.lint.per-file-ignores]
+"bench/harnesses.py" = ["B008"]
