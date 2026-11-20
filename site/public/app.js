@@ -287,7 +287,7 @@ function drawMc(){
       g.textAlign="center"; g.fillStyle = "#e8ecf5";
       g.fillText(ao===null?"—":ao+"–"+bo, L+j*cw+cw/2, T+i*rh+rh/2-6);
       g.font="9px ui-sans-serif"; g.fillStyle = sig?"#0b1020":"#8a94a8";
-      g.fillText(p<0.001?"p<.001":(sig?"p="+p.toFixed(2):"ns"), L+j*cw+cw/2, T+i*rh+rh/2+8);
+      g.fillText(p<0.001?"p<.001":(p<0.01?"p<.01":(sig?"p="+p.toFixed(2):"ns")), L+j*cw+cw/2, T+i*rh+rh/2+8);
       g.font=(narrow?"10px":"11px")+" ui-sans-serif";
     });
   });
