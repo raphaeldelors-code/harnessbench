@@ -4,7 +4,13 @@
   "date": "2026-11-17",
   "model": "strata_iq3s",
   "hardware": "bench-rig-01",
-  "harnesses": ["claude-code", "deepseek-harness", "mini", "opencode", "pi"],
+  "harnesses": [
+    "claude-code",
+    "deepseek-harness",
+    "mini",
+    "opencode",
+    "pi"
+  ],
   "dataset": {
     "name": "SWE-bench Lite subset",
     "instances": 10,

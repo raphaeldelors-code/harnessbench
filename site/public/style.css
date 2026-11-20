@@ -42,8 +42,10 @@ main{max-width:1180px;margin:0 auto;padding:10px 20px 40px}
 .card h2{font-size:15px;font-weight:700;margin-bottom:12px}
 .card h2 .sub{color:var(--dim);font-weight:400;font-size:12px;margin-left:6px}
 .chart-box{position:relative;height:300px}
-.chart-box.tall{height:auto}
+.chart-box.tall{height:auto;min-height:340px}
 .chart-box canvas{width:100%;display:block}
+.hm{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.hm canvas{width:auto;display:block}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .versions{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
 .vrow{background:var(--card2);border-radius:10px;padding:10px 14px;font-size:13px}

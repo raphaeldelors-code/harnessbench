@@ -40,6 +40,19 @@ def main() -> int:
         for e in errs[:8]:
             print(f"   - {e}")
             fails += 1
+    # cross-file: every run must reference a rig that exists in data/hardware.json
+    with open("data/hardware.json") as fh:
+        hw = json.load(fh)
+    rig_ids = {hw["id"]} if isinstance(hw, dict) else {h["id"] for h in hw}
+    for manifest in sorted(glob.glob("runs/*/run.json")):
+        with open(manifest) as fh:
+            m = json.load(fh)
+        if m.get("hardware") not in rig_ids:
+            print(f"[rig-ref] {manifest}: hardware '{m.get('hardware')}' not in {sorted(rig_ids)}")
+            fails += 1
+        if not glob.glob(manifest.replace("run.json", "data/versions.json")):
+            print(f"[rig-ref] {manifest}: missing data/versions.json (reproducibility contract)")
+            fails += 1
     print("validate_data:", "OK" if fails == 0 else f"{fails} ERRORS")
     return 0 if fails == 0 else 1
 

@@ -40,6 +40,10 @@
         <h2>Throughput <span class="sub">resolved / GPU-hour (best run)</span></h2>
         <div class="chart-box"><canvas id="oThr"></canvas></div>
       </div>
+      <div class="card">
+        <h2>Wall time <span class="sub">minutes per instance (best run)</span></h2>
+        <div class="chart-box"><canvas id="oWall"></canvas></div>
+      </div>
       <div class="card wide">
         <h2>Cohort map <span class="sub">which harness was measured on which run (bar = best)</span></h2>
         <div id="cohortTable" class="table-wrap"></div>
@@ -73,20 +77,24 @@
         <div class="chart-box"><canvas id="cWall"></canvas></div>
       </div>
       <div class="card">
-        <h2>Per-instance wall <span class="sub">p10 / median / p90 minutes</span></h2>
-        <div class="chart-box"><canvas id="cDist"></canvas></div>
-      </div>
-      <div class="card">
         <h2>Cache use <span class="sub">M cached input tokens</span></h2>
         <div class="chart-box"><canvas id="cCache"></canvas></div>
       </div>
+      <div class="card">
+        <h2>Decode speed <span class="sub">output tokens / wall second</span></h2>
+        <div class="chart-box"><canvas id="cTokps"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Per-instance wall <span class="sub">solid bar = p10–p90 · dot = median, minutes</span></h2>
+        <div class="chart-box"><canvas id="cDist"></canvas></div>
+      </div>
       <div class="card wide">
-        <h2>Instance grid <span class="sub">R = resolved, E = empty/failed patch</span></h2>
-        <div class="chart-box tall"><canvas id="cGrid"></canvas></div>
+        <h2>Instance grid <span class="sub">R resolved · E empty patch · T timeout · U ungraded</span></h2>
+        <div class="chart-box tall hm"><canvas id="cGrid"></canvas></div>
       </div>
       <div class="card wide">
         <h2>Pairwise significance <span class="sub">McNemar exact p — green: row harness wins, red: loses</span></h2>
-        <div class="chart-box"><canvas id="cMc"></canvas></div>
+        <div class="chart-box hm"><canvas id="cMc"></canvas></div>
       </div>
       <details class="card wide repro">
         <summary>Run reproducibility <span class="sub">exact component versions + config</span></summary>

@@ -90,6 +90,7 @@ def build():
                 "date": manifest.get("date", run_dir.name[:10]),
                 "model": manifest.get("model", versions.get("model", "strata_iq3s")),
                 "hardware": manifest.get("hardware", "bench-rig-01"),
+                "rig_id": manifest.get("hardware", "bench-rig-01"),
                 "dataset": manifest.get("dataset", {}),
                 "n_instances": len(results["instances"]),
                 "instances": results["instances"],
@@ -107,7 +108,7 @@ def build():
         "runs": runs,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    OUT.write_text(json.dumps(payload, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"wrote {OUT} ({OUT.stat().st_size} bytes, {len(runs)} runs)")
 
 

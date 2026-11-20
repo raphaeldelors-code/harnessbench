@@ -8,7 +8,8 @@
     "id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+"},
     "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
     "model": {"type": "string"},
-    "hardware": {"type": "string"},
+    "hardware": {"type": "string", "pattern": "^bench-rig-[0-9]+$",
+                 "description": "rig id referencing data/hardware.json (or data/rigs/<id>.json)"},
     "harnesses": {"type": "array", "items": {"type": "string"}, "minItems": 1},
     "dataset": {
       "type": "object",

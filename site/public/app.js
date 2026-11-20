@@ -18,7 +18,7 @@ function crossRun(){
   });
   const harnesses = {};
   Object.entries(best).forEach(([h,b])=>{
-    harnesses[h] = {...b.x, pct: 100*b.pct, src_run: b.r.id};
+    harnesses[h] = {...b.x, pct: 100*b.pct, src_run: b.r.id, n_inst: b.r.n_instances};
   });
   const insts = DATA.runs.reduce((a,r)=> r.n_instances>a.length? r.instances:a, []);
   return {id:"cross", date:"", model:[...new Set(DATA.runs.map(r=>r.model))].join(", "),
@@ -78,8 +78,9 @@ function renderHero(){
   const cross = crossRun();
   const hs=Object.entries(cross.harnesses).map(([h,x])=>({h,v:x.pct})).sort((a,b)=>b.v-a.v);
   const nRuns=DATA.runs.length, nH=hs.length;
+  const rigs=[...new Set(DATA.runs.map(r=>r.rig_id).filter(Boolean))].join(", ")||"bench-rig-01";
   $("#hero").innerHTML=`<div class="big">${nH} coding-agent harnesses · ${nRuns} runs · ${DATA.runs.map(r=>r.n_instances).join(" + ")} graded instances ·
-    model <b>${[...new Set(DATA.runs.map(r=>r.model))].join(", ")}</b> on a single RTX 3090</div>
+    model <b>${[...new Set(DATA.runs.map(r=>r.model))].join(", ")}</b> on a single RTX 3090 <span class="dim">(${rigs})</span></div>
     <div class="champ"><span class="medal">🏆</span><b>${hs[0].h}</b> leads the board at
     <b>${hs[0].v.toFixed(0)}%</b> resolved (best cohort)</div>`;
 }
@@ -88,17 +89,22 @@ function renderHero(){
 function renderOverview(){
   const cross = crossRun();
   const names = Object.keys(cross.harnesses);
+  const box = $("#oResolved").closest(".chart-box");
+  const narrow = box.clientWidth < 620;
+  const lab = n => narrow && n.length > 9 ? n.slice(0,8)+"…" : n;
   const rowBar = (id, valFn, fmtTip) => {
     const rows = names.map(h=>({h, v: valFn(cross.harnesses[h])})).sort((a,b)=>b.v-a.v);
-    mkChart(id,{type:"bar",data:{labels:rows.map(x=>x.h),
+    mkChart(id,{type:"bar",data:{labels:rows.map(x=>lab(x.h)),
       datasets:[{data:rows.map(x=>x.v),backgroundColor:rows.map(x=>PALETTE[names.indexOf(x.h)%PALETTE.length]),
         borderRadius:8,maxBarThickness:46}]},
       options:{...baseOpts, plugins:{...baseOpts.plugins,
-        tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y)+" · "+rows[c.dataIndex].h}}}}});
+        tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y)+" · "+rows[c.dataIndex].h}}},
+        scales:scaled(narrow)}});
   };
   rowBar("#oResolved", h=>h.pct, v=>v.toFixed(0)+"% resolved");
   rowBar("#oTok", h=>h.input_tokens/1e6, v=>v.toFixed(1)+"M input tokens");
   rowBar("#oThr", h=>h.resolved_per_gpu_h, v=>v.toFixed(2)+" resolved / GPU-h");
+  rowBar("#oWall", h=>h.wall_s/60/h.n_inst, v=>Math.round(v)+" min wall per instance (best run)");
   let html="<table><thead><tr><th>harness</th>"+DATA.runs.map(r=>`<th>${r.id.replace(/-strata-iq3s/,"")}</th>`).join("")+"</tr></thead><tbody>";
   names.forEach(h=>{
     html+=`<tr><td><i class="dot" style="background:${PALETTE[names.indexOf(h)%PALETTE.length]}"></i>${h}</td>`;
@@ -122,6 +128,7 @@ function renderRun(){
   barSorted("#cTok", h=>h.input_tokens/1e6, "M input tokens", v=>v.toFixed(1)+"M input tokens");
   barSorted("#cWall", h=>h.wall_s/60, "minutes", v=>Math.round(v)+" min wall");
   barSorted("#cCache", h=>h.cache_tokens/1e6, "M cached tokens", v=>v.toFixed(1)+"M cached input tokens");
+  barSorted("#cTokps", h=>h.output_tokens/h.wall_s, "tok/s", v=>v.toFixed(1)+" output tok/s");
   const hasDist = visible().some(h=>(r.windows[h]||[]).length);
   $("#cDist").closest(".card").style.display = hasDist?"":"none";
   distChart(); drawMc(); drawGrid();
@@ -130,6 +137,7 @@ function renderVersions(){
   const v=run().versions||{}; const hv=v.harness_versions||{};
   const row=(k,val)=>`<div class="vrow"><b>${k}</b><code>${val}</code></div>`;
   let html="";
+  html+=row("rig", run().rig_id || v.rig || "bench-rig-01");
   html+=row("model", `${v.model||run().model}<br>${v.model_args||""}`);
   html+=row("inference stack", `strata ${v.strata_terminal||"?"}<br>engine ${v.engine||"?"}<br>llama-swap ${v.llama_swap||"?"}`);
   html+=row("hardware", v.gpu||"?");
@@ -144,13 +152,16 @@ function renderRig(){
   const h=(DATA.hardware||{});
   const row=(k,val)=>`<div class="vrow"><b>${k}</b><code>${val}</code></div>`;
   let html="";
-  html+=row("machine", `${h.id||"?"}<br>${h.description||""}`);
+  html+=row("rig id", `${h.id||"bench-rig-01"}`);
+  html+=row("machine", h.description||"");
   html+=row("cpu", `${h.cpu?.model||"?"} · ${h.cpu?.cores||"?"} logical cores`);
   html+=row("memory", `${h.memory?.size_gib||"?"} GiB<br>${h.memory?.channels||""}${h.memory?.speed_mt_s?` @ ${h.memory.speed_mt_s} MT/s`:""}`);
   html+=row("gpu", `${h.gpu?.model||"?"}<br>${h.gpu?.vram_gib||"?"} GiB VRAM<br>PCIe ${h.gpu?.pcie_generation||"?"} · ${h.gpu?.pcie_lanes||"?"}`);
   html+=row("board", h.board||"?");
   html+=row("software", `${h.os||"?"}<br>${h.served_by||""}`);
   html+=row("updated", h.updated_utc||"?");
+  const users=DATA.runs.filter(r=>(r.rig_id||"bench-rig-01")===(h.id||"bench-rig-01")).map(r=>r.id);
+  html+=row("runs on this rig", users.join("<br>")||"—");
   $("#rigBody").innerHTML=html;
 }
 
@@ -159,53 +170,70 @@ function mkChart(id, cfg){
   if(charts[id]) charts[id].destroy();
   charts[id]=new Chart($(id), cfg);
 }
+const GRID="rgba(130,160,255,.08)";
+function scaled(narrow, yTitle){
+  return {x:{ticks:{color:"#c6cede",font:{size:narrow?10:11.5},maxRotation:45,minRotation:45,autoSkip:false},grid:{display:false}},
+          y:{beginAtZero:true,ticks:{color:"#8a94a8"},grid:{color:GRID},
+             title:{display:!!yTitle&&!narrow,text:yTitle,color:"#8a94a8"}}};
+}
 const baseOpts = {
-  responsive:true, maintainAspectRatio:false,
-  animation:{duration:900, easing:"easeOutQuart"},
+  responsive:true, maintainAspectRatio:false, animation:false,
   plugins:{legend:{display:false},
     tooltip:{backgroundColor:"#0d1119",borderColor:"rgba(130,160,255,.25)",borderWidth:1}},
-  scales:{x:{ticks:{color:"#c6cede",font:{size:11.5},maxRotation:60,minRotation:0,autoSkip:true},grid:{color:"rgba(130,160,255,.08)"}},
-          y:{ticks:{color:"#8a94a8"},grid:{color:"rgba(130,160,255,.08)"}}},
 };
+function narrowBox(id){ const b=$(id).closest(".chart-box, .hm"); return b && b.clientWidth<620; }
+function lab(n, narrow){ return narrow && n.length>9 ? n.slice(0,8)+"…" : n; }
 function barSorted(id, valFn, yTitle, fmtTip){
   const r=run();
+  const narrow=narrowBox(id);
   const rows=visible().map(h=>({h,v:valFn(r.harnesses[h])})).sort((a,b)=>b.v-a.v);
-  mkChart(id,{type:"bar",data:{labels:rows.map(x=>x.h),
+  if(!rows.length) return;
+  mkChart(id,{type:"bar",data:{labels:rows.map(x=>lab(x.h,narrow)),
     datasets:[{data:rows.map(x=>x.v),backgroundColor:rows.map(x=>color(x.h)),
       borderRadius:8,maxBarThickness:46}]},
     options:{...baseOpts, plugins:{...baseOpts.plugins,
       tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y)}}},
-      scales:{...baseOpts.scales,y:{...baseOpts.scales.y,title:{display:!!yTitle,text:yTitle,color:"#8a94a8"}}}}});
+      scales:scaled(narrow,yTitle)}});
 }
 
-/* ---------- heatmaps on canvas (mobile-aware margins) ---------- */
+/* ---------- heatmaps on canvas (min cell width + horizontal scroll) ---------- */
 const tip = document.createElement("div"); tip.className="hm-tip"; document.body.appendChild(tip);
 function showTip(ev,html){ tip.innerHTML=html; tip.style.display="block";
   tip.style.left=Math.min(ev.clientX+12, innerWidth-340)+"px"; tip.style.top=Math.min(ev.clientY+12, innerHeight-90)+"px"; }
+
+function truncText(g, text, maxW){
+  if(g.measureText(text).width<=maxW) return text;
+  let t=text;
+  while(t.length>1 && g.measureText(t+"…").width>maxW) t=t.slice(0,-1);
+  return t+"…";
+}
 
 function drawGrid(){
   const cv=$("#cGrid"), r=run(), hs=visible(), insts=r.instances;
   if(!hs.length||!insts.length) return;
   const dpr=devicePixelRatio||1;
-  const narrow = cv.clientWidth < 620;
-  const L=narrow?92:150, T=narrow?44:56;
-  const rh=Math.max(9, Math.min(12,(420-T-6)/insts.length));
+  const wrap=cv.closest(".hm"), avail=wrap.clientWidth;
+  const narrow = avail < 620;
+  const L=narrow?92:150, T=narrow?86:56;
+  const minCW=24, minW=L+hs.length*minCW+10;
+  const W=Math.max(avail, minW);
+  const cw=Math.min(46,(W-L-10)/hs.length);
+  const rh=Math.max(10, Math.min(15,(620-T)/insts.length));
   const boxH=T+insts.length*rh+16;
-  cv.style.height=boxH+"px";
-  cv.width=cv.clientWidth*dpr; cv.height=boxH*dpr;
+  cv.style.width=W+"px"; cv.style.height=boxH+"px";
+  cv.width=W*dpr; cv.height=boxH*dpr;
   const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
-  const W=cv.clientWidth;
-  const cw=Math.max(10,Math.min(46,(W-L-10)/hs.length));
   g.textBaseline="middle";
-  const shortName = h => narrow && h.length>9 ? h.slice(0,8)+"…" : h;
-  hs.forEach((h,j)=>{ g.fillStyle=color(h); g.font=(narrow?"9.5px":"10.5px")+" ui-sans-serif"; g.save();
-    g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/4);
-    g.textAlign="right"; g.fillText(shortName(h),0,0); g.restore(); });
-  insts.forEach((ins,i)=>{ g.fillStyle="#8a94a8"; g.font="9px ui-sans-serif"; g.textAlign="right";
-    g.fillText(ins.slice(0, narrow?14:22), L-8, T+i*rh+rh/2);
+  hs.forEach((h,j)=>{ g.fillStyle=color(h); g.font=(narrow?"10px":"10.5px")+" ui-sans-serif"; g.save();
+    if(narrow){ g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/2); }
+    else { g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/4); }
+    g.textAlign="right"; g.fillText(h,0,0); g.restore(); });
+  insts.forEach((ins,i)=>{ g.fillStyle="#8a94a8"; g.font=(narrow?"9px":"10px")+" ui-sans-serif"; g.textAlign="right";
+    g.fillText(truncText(g,ins,L-12), L-8, T+i*rh+rh/2);
     hs.forEach((h,j)=>{
       const cell=(r.harnesses[h].per_instance||{})[ins]||"?";
-      g.fillStyle = cell==="R" ? "rgba(61,220,132,.85)" : cell==="E" ? "rgba(255,93,93,.35)" : "rgba(130,160,255,.1)";
+      g.fillStyle = cell==="R" ? "rgba(61,220,132,.85)" : cell==="E" ? "rgba(255,93,93,.5)"
+        : cell==="T" ? "rgba(255,176,32,.65)" : "rgba(130,160,255,.14)";
       g.fillRect(L+j*cw+1.5, T+i*rh, cw-3, rh-2);
     });
   });
@@ -214,7 +242,7 @@ function drawGrid(){
     const j=Math.floor((x-L)/cw), i=Math.floor((y-T)/rh);
     if(j>=0&&j<hs.length&&i>=0&&i<insts.length){
       const cell=(r.harnesses[hs[j]].per_instance||{})[insts[i]]||"?";
-      showTip(ev,`<b>${insts[i]}</b><br>${hs[j]} → ${cell==="R"?"resolved ✅":"failed ❌"}`);
+      showTip(ev,`<b>${insts[i]}</b><br>${hs[j]} → ${{R:"resolved ✅",E:"empty/failed patch ❌",T:"timeout ⏱",U:"ungraded ?"}[cell]||cell}`);
     } else tip.style.display="none"; };
   cv.onmouseleave=()=>tip.style.display="none";
 }
@@ -223,21 +251,25 @@ function drawMc(){
   const cv=$("#cMc"), r=run(), hs=visible(), n=hs.length;
   if(!n) return;
   const dpr=devicePixelRatio||1;
-  const narrow = cv.clientWidth < 620;
-  const L=narrow?86:130, T=narrow?70:90, boxH=T+n*(narrow?Math.max(26,Math.min(42,(360-T)/n)):42)+10;
-  const rh=(boxH-T-6)/n;
-  cv.style.height=boxH+"px";
-  cv.width=cv.clientWidth*dpr; cv.height=boxH*dpr;
+  const wrap=cv.closest(".hm"), avail=wrap.clientWidth;
+  const narrow = avail < 620;
+  const L=narrow?96:130;
+  const minCW=40, minW=L+n*minCW+10;
+  const W=Math.max(avail, minW);
+  const cw=Math.min(52,(W-L-10)/n);
+  const T=narrow?96:90;
+  const rh=Math.max(26, Math.min(42,(380-T)/n));
+  const boxH=T+n*rh+10;
+  cv.style.width=W+"px"; cv.style.height=boxH+"px";
+  cv.width=W*dpr; cv.height=boxH*dpr;
   const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
-  const W=cv.clientWidth;
-  const cw=Math.max(22,(W-L-10)/n);
-  g.font=(narrow?"9.5px":"11px")+" ui-sans-serif";
-  const shortName = h => narrow && h.length>9 ? h.slice(0,8)+"…" : h;
+  g.font=(narrow?"10px":"11px")+" ui-sans-serif";
   hs.forEach((h,j)=>{ g.fillStyle=color(h); g.save();
-    g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/4);
-    g.textAlign="right"; g.fillText(shortName(h),0,0); g.restore(); });
+    if(narrow){ g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/2); }
+    else { g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/4); }
+    g.textAlign="right"; g.fillText(h,0,0); g.restore(); });
   hs.forEach((a,i)=>{ g.fillStyle="#8a94a8"; g.textAlign="right"; g.textBaseline="middle";
-    g.fillText(shortName(a), L-8, T+i*rh+rh/2);
+    g.fillText(truncText(g,a,L-12), L-8, T+i*rh+rh/2);
     hs.forEach((b,j)=>{
       const key=a+"|"+b, k2=b+"|"+a;
       let p=1, win=0;
@@ -248,7 +280,7 @@ function drawMc(){
       g.fillStyle = win>0?`rgba(61,220,132,${alpha})`:win<0?`rgba(255,93,93,${alpha})`:`rgba(130,160,255,${alpha})`;
       g.fillRect(L+j*cw+2, T+i*rh+2, cw-4, rh-4);
       g.fillStyle = p<0.5?"#e8ecf5":"#8a94a8"; g.textAlign="center";
-      g.fillText(i===j?"—":(p<0.001?"<.001":p<0.0001?"<.0001":p.toFixed(narrow?2:3)), L+j*cw+cw/2, T+i*rh+rh/2);
+      g.fillText(i===j?"—":(p<0.001?"<.001":p.toFixed(narrow?2:3)), L+j*cw+cw/2, T+i*rh+rh/2);
     });
   });
   cv.onmousemove=ev=>{ const b=cv.getBoundingClientRect();
@@ -264,19 +296,26 @@ function drawMc(){
   cv.onmouseleave=()=>tip.style.display="none";
 }
 
-/* ---------- per-instance wall distribution (p10/median/p90 floating bars) ---------- */
+/* ---------- per-instance wall distribution (p10/median/p90 — same visual language) ---------- */
 function q(sorted,f){ if(!sorted.length) return null; return sorted[Math.min(sorted.length-1, Math.floor(f*(sorted.length-1)))]; }
 function distChart(){
   const r=run(), hs=visible();
   const rows=hs.map(h=>{ const w=(r.windows[h]||[]).map(x=>x.wall_s/60).filter(v=>v!=null).sort((a,b)=>a-b);
-    return {h, lo:q(w,.1), med:q(w,.5), hi:q(w,.9)}; }).filter(x=>x.med!=null);
+    return {h, lo:q(w,.1), med:q(w,.5), hi:q(w,.9)}; }).filter(x=>x.med!=null)
+    .sort((a,b)=>b.med-a.med);   // same descending-value ordering as every other bar chart
   if(!rows.length){ if(charts.cDist){charts.cDist.destroy(); charts.cDist=null;} return; }
-  mkChart("#cDist",{type:"bar",data:{labels:rows.map(x=>x.h),
-    datasets:[{data:rows.map(x=>[x.lo,x.hi]),backgroundColor:rows.map(x=>color(x.h)+"55"),
-      borderColor:rows.map(x=>color(x.h)),borderWidth:1.5,borderRadius:8,maxBarThickness:40}]},
+  const narrow=narrowBox("#cDist");
+  mkChart("#cDist",{data:{labels:rows.map(x=>lab(x.h,narrow)),
+    datasets:[
+      {type:"bar",label:"p10–p90",data:rows.map(x=>[x.lo,x.hi]),
+       backgroundColor:rows.map(x=>color(x.h)),borderRadius:8,maxBarThickness:46},
+      {type:"line",label:"median",data:rows.map(x=>x.med),
+       showLine:false,pointRadius:5,pointHoverRadius:6,
+       pointBackgroundColor:rows.map(x=>color(x.h)),pointBorderColor:"#0a0d13",pointBorderWidth:2}]},
     options:{...baseOpts, plugins:{...baseOpts.plugins,
       tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>{const x=rows[c.dataIndex];
-        return `p10 ${x.lo.toFixed(1)} · median ${x.med.toFixed(1)} · p90 ${x.hi.toFixed(1)} min`;}}}}}});
+        return `p10 ${x.lo.toFixed(1)} · median ${x.med.toFixed(1)} · p90 ${x.hi.toFixed(1)} min`;}}}},
+      scales:scaled(narrow,"minutes (per instance)")}});
 }
 
 /* ---------- calibration ---------- */
@@ -308,6 +347,6 @@ fetch("data/site.json").then(r=>r.json()).then(d=>{ DATA=d;
   window.addEventListener("hashchange",()=>{ const hh=(location.hash||"").slice(1);
     if(hh.startsWith("runs/")){ const i=DATA.runs.findIndex(r=>r.id===hh.slice(5)); if(i>=0){ runIdx=i; showSection("runs"); } }
     else if(hh) showSection(hh); });
-  let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{ if(section==="runs"){drawGrid();drawMc();distChart();} },250); });
+  let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{ render(); },250); });
   showSection(sec);
 });
