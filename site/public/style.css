@@ -35,8 +35,8 @@ main{max-width:1180px;margin:0 auto;padding:10px 20px 40px}
 .chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .chip.off{opacity:.35;text-decoration:line-through}
 .chip-btn{padding:6px 12px;border-radius:999px;border:1px dashed var(--line);background:none;color:var(--dim);cursor:pointer;font-size:12px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:12px}
+.card{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
   animation:rise .5s ease both}
 .card.wide{grid-column:1/-1}
 .card h2{font-size:15px;font-weight:700;margin-bottom:12px}
@@ -72,7 +72,7 @@ footer a{color:var(--acc1);text-decoration:none}
   header{padding:16px 14px 4px;gap:10px}
   #secNav{margin-left:0;width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
   main{padding:8px 12px 30px}
-  .grid{grid-template-columns:1fr;gap:12px}
+  .grid{grid-template-columns:minmax(0,1fr);gap:12px}
   .chart-box{height:250px}
   .hero .big{font-size:14px}
   .versions{grid-template-columns:1fr}

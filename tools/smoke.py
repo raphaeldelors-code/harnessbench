@@ -41,6 +41,20 @@ def check_page(page, label: str) -> list[str]:
     page.wait_for_timeout(800)
     if "cohortTable" not in page.content():
         errors.append(f"{label}: page did not hydrate")
+    wide = page.evaluate(
+        """(() => {
+            const vw = window.innerWidth;
+            const canv = [...document.querySelectorAll('canvas')]
+                .filter(c => c.getBoundingClientRect().width > vw + 1)
+                .map(c => c.id);
+            const pageOverflow = document.documentElement.scrollWidth > vw + 1;
+            return {canv, pageOverflow};
+        })()"""
+    )
+    if wide["canv"]:
+        errors.append(f"{label}: canvases wider than viewport: {wide['canv']}")
+    if wide["pageOverflow"]:
+        errors.append(f"{label}: page scrolls horizontally ({wide})")
     for section, ids in CANVASES.items():
         page.evaluate(f"location.hash = '{section}'; showSection('{section}')")
         page.wait_for_timeout(900)
