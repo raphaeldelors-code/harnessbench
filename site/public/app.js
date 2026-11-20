@@ -214,10 +214,14 @@ function drawGrid(){
   const dpr=devicePixelRatio||1;
   const wrap=cv.closest(".hm"), avail=wrap.clientWidth;
   const narrow = avail < 620;
-  const L=narrow?92:150, T=narrow?86:56;
-  const minCW=24, minW=L+hs.length*minCW+10;
+  const L=narrow?92:150, minCW=24, minW=L+hs.length*minCW+10;
   const W=Math.max(avail, minW);
   const cw=Math.min(46,(W-L-10)/hs.length);
+  // vertical column headers: measure first so the header band never overlaps cells
+  const mt=document.createElement("canvas").getContext("2d");
+  mt.font=(narrow?"10px":"10.5px")+" ui-sans-serif";
+  const maxLW=Math.max(...hs.map(h=>mt.measureText(h).width));
+  const T=Math.min(150, Math.max(56, maxLW+18));
   const rh=Math.max(10, Math.min(15,(620-T)/insts.length));
   const boxH=T+insts.length*rh+16;
   cv.style.width=W+"px"; cv.style.height=boxH+"px";
@@ -225,9 +229,8 @@ function drawGrid(){
   const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
   g.textBaseline="middle";
   hs.forEach((h,j)=>{ g.fillStyle=color(h); g.font=(narrow?"10px":"10.5px")+" ui-sans-serif"; g.save();
-    if(narrow){ g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/2); }
-    else { g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/4); }
-    g.textAlign="right"; g.fillText(h,0,0); g.restore(); });
+    g.translate(L+j*cw+cw/2, T-8); g.rotate(-Math.PI/2);
+    g.textAlign="left"; g.fillText(h,0,0); g.restore(); });
   insts.forEach((ins,i)=>{ g.fillStyle="#8a94a8"; g.font=(narrow?"9px":"10px")+" ui-sans-serif"; g.textAlign="right";
     g.fillText(truncText(g,ins,L-12), L-8, T+i*rh+rh/2);
     hs.forEach((h,j)=>{
@@ -257,7 +260,10 @@ function drawMc(){
   const minCW=40, minW=L+n*minCW+10;
   const W=Math.max(avail, minW);
   const cw=Math.min(52,(W-L-10)/n);
-  const T=narrow?96:90;
+  const mt=document.createElement("canvas").getContext("2d");
+  mt.font=(narrow?"10px":"11px")+" ui-sans-serif";
+  const maxLW=Math.max(...hs.map(h=>mt.measureText(h).width));
+  const T=Math.min(150, Math.max(72, maxLW+18));
   const rh=Math.max(26, Math.min(42,(380-T)/n));
   const boxH=T+n*rh+10;
   cv.style.width=W+"px"; cv.style.height=boxH+"px";
@@ -265,9 +271,8 @@ function drawMc(){
   const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
   g.font=(narrow?"10px":"11px")+" ui-sans-serif";
   hs.forEach((h,j)=>{ g.fillStyle=color(h); g.save();
-    if(narrow){ g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/2); }
-    else { g.translate(L+j*cw+cw/2, T-10); g.rotate(-Math.PI/4); }
-    g.textAlign="right"; g.fillText(h,0,0); g.restore(); });
+    g.translate(L+j*cw+cw/2, T-8); g.rotate(-Math.PI/2);
+    g.textAlign="left"; g.fillText(h,0,0); g.restore(); });
   hs.forEach((a,i)=>{ g.fillStyle="#8a94a8"; g.textAlign="right"; g.textBaseline="middle";
     g.fillText(truncText(g,a,L-12), L-8, T+i*rh+rh/2);
     hs.forEach((b,j)=>{
@@ -301,9 +306,13 @@ function q(sorted,f){ if(!sorted.length) return null; return sorted[Math.min(sor
 function distChart(){
   const r=run(), hs=visible();
   const rows=hs.map(h=>{ const w=(r.windows[h]||[]).map(x=>x.wall_s/60).filter(v=>v!=null).sort((a,b)=>a-b);
-    return {h, lo:q(w,.1), med:q(w,.5), hi:q(w,.9)}; }).filter(x=>x.med!=null)
+    return {h, n:w.length, lo:q(w,.1), med:q(w,.5), hi:q(w,.9)}; })
+    .filter(x=>x.n>=5)          // p10/p90 needs ≥5 samples; tiny windows sets (mini: 1–4 incl. hangs) blow up the scale
     .sort((a,b)=>b.med-a.med);   // same descending-value ordering as every other bar chart
   if(!rows.length){ if(charts.cDist){charts.cDist.destroy(); charts.cDist=null;} return; }
+  const dropped=hs.filter(h=>!rows.some(x=>x.h===h));
+  const dn=$("#distNote");
+  if(dn){ dn.hidden=!dropped.length; dn.textContent=dropped.length?`Excluded (fewer than 5 timed instances): ${dropped.join(", ")}`:""; }
   const narrow=narrowBox("#cDist");
   mkChart("#cDist",{data:{labels:rows.map(x=>lab(x.h,narrow)),
     datasets:[
