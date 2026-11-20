@@ -1,0 +1,24 @@
+{
+  "status": "no_gain — not applied (chain compare step failed with 'unsupported benchmark report'; deltas computed manually from bench summaries, quality 12/12 both runs)",
+  "decoding": {
+    "baseline_tps": 110.6,
+    "candidates": [
+      {
+        "settings": "--pcie-frac 0.20 --adapt-every 1 --adapt-swaps 160 --adapt-decay 0.97 --spec-min-p 0.70",
+        "tps": 105.7,
+        "gain_pct": -4.4
+      }
+    ]
+  },
+  "applied": "none — mean decode gain -4.4% (below +2% threshold); 4k decode regressed -13.6%",
+  "compare": {
+    "decode short": 0.6,
+    "decode prompt-4k": -13.6,
+    "decode prompt-16k": 0.3,
+    "prefill short": -1.1,
+    "prefill prompt-4k": 0.3,
+    "prefill prompt-16k": 0.0
+  },
+  "applied_utc": "2026-11-20T11:01Z",
+  "note": "Calibration applied only to bench profile hb/calib/rig-iq3s.json; llama-swap strata_iq3s cmd untouched (no --set pairs added). Verified llama-swap active + live chat completion on strata_iq3s at 2026-11-20T11:01Z."
+}
