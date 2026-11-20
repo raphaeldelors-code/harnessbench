@@ -32,7 +32,7 @@ function run(){ return DATA.runs[runIdx]; }
 function color(h, names){ names = names || harnessNames(); return PALETTE[names.indexOf(h) % PALETTE.length]; }
 
 /* ---------- exact two-sided McNemar ---------- */
-function binom(n){ let r=1; for(let i=1;i<=n;i++) r=r*(n-i+1)/i; return r; }
+function binom(n,k){ let r=1; for(let i=1;i<=k;i++) r=r*(n-i+1)/i; return r; }
 function mcNemarP(a,b){ const n=a+b; if(!n) return 1;
   let s=0; for(let k=0;k<=Math.min(a,b);k++) s+=binom(n,k);
   return Math.min(1, 2*s/Math.pow(2,n)); }

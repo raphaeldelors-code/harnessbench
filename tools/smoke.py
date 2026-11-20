@@ -65,6 +65,10 @@ def check_page(page, label: str) -> list[str]:
                 continue
             if el.is_visible() and not drawn(el):
                 errors.append(f"{label}/{section}: {sel} has no pixels (empty chart)")
+        if section == "runs":
+            math = page.evaluate("({b: binom(5, 2), p: mcNemarP(2, 5), p2: mcNemarP(21, 1)})")
+            if math["b"] != 10 or abs(math["p"] - 0.453125) > 1e-9 or math["p2"] > 1e-4:
+                errors.append(f"{label}: McNemar math wrong: {math}")
     for sel, sec in (("#rigBody", "rig"), ("#tuneBody", "calibration")):
         page.evaluate(f"showSection('{sec}')")
         page.wait_for_timeout(300)
