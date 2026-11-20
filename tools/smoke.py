@@ -18,7 +18,7 @@ URL = None  # set at boot (http://127.0.0.1:<port>/index.html)
 
 CANVASES = {
     "overview": ["#oResolved", "#oTok", "#oThr", "#oWall"],
-    "runs": ["#cResolved", "#cThr", "#cTok", "#cWall", "#cCache", "#cTokps", "#cDist", "#cGrid", "#cMc"],
+    "runs": ["#cResolved", "#cThr", "#cTok", "#cWall", "#cCache", "#cDist", "#cGrid", "#cMc"],
 }
 
 

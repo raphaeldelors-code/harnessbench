@@ -81,11 +81,7 @@
         <div class="chart-box"><canvas id="cCache"></canvas></div>
       </div>
       <div class="card">
-        <h2>Decode speed <span class="sub">output tokens / wall second</span></h2>
-        <div class="chart-box"><canvas id="cTokps"></canvas></div>
-      </div>
-      <div class="card">
-        <h2>Per-instance wall <span class="sub">candle = p10–p90 · white tick = median, minutes</span></h2>
+        <h2>Per-instance wall <span class="sub">candle = p10–p90 · white tick = median · retries summed per instance, minutes</span></h2>
         <div class="chart-box"><canvas id="cDist"></canvas></div>
         <p class="dim" id="distNote" hidden></p>
       </div>
@@ -94,7 +90,7 @@
         <div class="chart-box tall hm"><canvas id="cGrid"></canvas></div>
       </div>
       <div class="card wide">
-        <h2>Pairwise significance <span class="sub">McNemar exact p — green: row harness wins, red: loses</span></h2>
+        <h2>Pairwise significance <span class="sub">green = row beats column (exact McNemar p&lt;0.05) · grey = not significant · number = p</span></h2>
         <div class="chart-box tall hm"><canvas id="cMc"></canvas></div>
       </div>
       <details class="card wide repro">

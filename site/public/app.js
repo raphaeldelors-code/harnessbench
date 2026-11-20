@@ -128,7 +128,6 @@ function renderRun(){
   barSorted("#cTok", h=>h.input_tokens/1e6, "M input tokens", v=>v.toFixed(1)+"M input tokens");
   barSorted("#cWall", h=>h.wall_s/60, "minutes", v=>Math.round(v)+" min wall");
   barSorted("#cCache", h=>h.cache_tokens/1e6, "M cached tokens", v=>v.toFixed(1)+"M cached input tokens");
-  barSorted("#cTokps", h=>h.output_tokens/h.wall_s, "tok/s", v=>v.toFixed(1)+" output tok/s");
   const hasDist = visible().some(h=>(r.windows[h]||[]).length);
   $("#cDist").closest(".card").style.display = hasDist?"":"none";
   distChart(); drawMc(); drawGrid();
@@ -281,11 +280,12 @@ function drawMc(){
       if(i!==j){ const d=r.mcnemar[key]||r.mcnemar[k2];
         if(d){ const dd = r.mcnemar[key]?d:{a_only:d.b_only,b_only:d.a_only};
           p=mcNemarP(dd.a_only,dd.b_only); win=dd.a_only-dd.b_only; } }
-      const alpha = i===j?0.12:(p<0.05?0.85:(p<0.2?0.35:0.12));
-      g.fillStyle = win>0?`rgba(61,220,132,${alpha})`:win<0?`rgba(255,93,93,${alpha})`:`rgba(130,160,255,${alpha})`;
+      const sig = i!==j && p<0.05;                 // hue only for significant cells; grey otherwise
+      const alpha = sig?0.85:0.12;
+      g.fillStyle = sig ? (win>0?`rgba(61,220,132,${alpha})`:`rgba(255,93,93,${alpha})`) : `rgba(130,160,255,${alpha})`;
       g.fillRect(L+j*cw+2, T+i*rh+2, cw-4, rh-4);
       g.fillStyle = p<0.5?"#e8ecf5":"#8a94a8"; g.textAlign="center";
-      g.fillText(i===j?"—":(p<0.001?"<.001":p.toFixed(narrow?2:3)), L+j*cw+cw/2, T+i*rh+rh/2);
+      g.fillText(i===j?"—":(p<0.001?"<.001":p.toFixed(3)), L+j*cw+cw/2, T+i*rh+rh/2);
     });
   });
   cv.onmousemove=ev=>{ const b=cv.getBoundingClientRect();

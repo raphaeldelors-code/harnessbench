@@ -55,15 +55,18 @@ def mcnemar_pairs(grid: dict[str, dict[str, str]], instances: list[str]) -> dict
 
 
 def windows_for(data: Path, name: str) -> list[dict]:
-    rows = []
+    # One row per instance: wall time sums ALL recorded windows (crash/retry
+    # restarts included). Recording raw windows let ~0 s crashed starts pollute
+    # p10/median (codex/grok medians read ~0 min with 40 real runs out of 80 rows).
+    totals: dict[str, float] = {}
     for w in read_jsonl(data / f"windows_{name}.jsonl"):
         inst = w.get("instance_id") or w.get("inst") or w.get("instance")
         wall = w.get("wall_s")
         if wall is None and w.get("t0") is not None and w.get("t1") is not None:
             wall = w["t1"] - w["t0"]
         if inst and wall is not None:
-            rows.append({"inst": inst, "wall_s": wall})
-    return rows
+            totals[inst] = totals.get(inst, 0.0) + wall
+    return [{"inst": inst, "wall_s": wall} for inst, wall in totals.items()]
 
 
 def build():
