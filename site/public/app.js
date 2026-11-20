@@ -72,11 +72,7 @@ function renderHero(){
 }
 function renderVersions(){
   const v=run().versions||{}; const hv=v.harness_versions||{};
-  if(v.note){
-    let h="";
-    Object.entries(run().harnesses).forEach(([k,x])=>h+=row(k, `${x.pct.toFixed(0)}% best · from ${x.src_run}`));
-    $("#versions").innerHTML=h; return;
-  }
+  const noteMode=!!v.note;
   let html="";
   const row=(k,val)=>`<div class="vrow"><b>${k}</b><code>${val}</code></div>`;
   html+=row("model", `${v.model||run().model}<br>${v.model_args||""}`);
