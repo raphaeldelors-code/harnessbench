@@ -21,8 +21,8 @@ from bench.util import write_json as _write_json
 RESUME = {"on": False}
 
 
-def sh(cmd, **kw):
-    return subprocess.run(cmd, shell=isinstance(cmd, str), capture_output=True, text=True, **kw)
+def sh(cmd: list[str], **kw):
+    return subprocess.run(cmd, capture_output=True, text=True, **kw)
 
 
 def purge_contents(path: str):
