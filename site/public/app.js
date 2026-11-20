@@ -275,17 +275,20 @@ function drawMc(){
   hs.forEach((a,i)=>{ g.fillStyle="#8a94a8"; g.textAlign="right"; g.textBaseline="middle";
     g.fillText(truncText(g,a,L-12), L-8, T+i*rh+rh/2);
     hs.forEach((b,j)=>{
+      if(j>=i) return;                            // lower triangle only: each pair once, read row-vs-column
       const key=a+"|"+b, k2=b+"|"+a;
-      let p=1, win=0;
-      if(i!==j){ const d=r.mcnemar[key]||r.mcnemar[k2];
-        if(d){ const dd = r.mcnemar[key]?d:{a_only:d.b_only,b_only:d.a_only};
-          p=mcNemarP(dd.a_only,dd.b_only); win=dd.a_only-dd.b_only; } }
-      const sig = i!==j && p<0.05;                 // hue only for significant cells; grey otherwise
-      const alpha = sig?0.85:0.12;
-      g.fillStyle = sig ? (win>0?`rgba(61,220,132,${alpha})`:`rgba(255,93,93,${alpha})`) : `rgba(130,160,255,${alpha})`;
+      let p=1, win=0, ao=null, bo=null;
+      const d=r.mcnemar[key]||r.mcnemar[k2];
+      if(d){ const dd = r.mcnemar[key]?d:{a_only:d.b_only,b_only:d.a_only};
+        ao=dd.a_only; bo=dd.b_only; p=mcNemarP(ao,bo); win=ao-bo; }
+      const sig = p<0.05;                         // hue only for significant cells; grey otherwise
+      g.fillStyle = sig ? (win>0?`rgba(61,220,132,0.85)`:`rgba(255,93,93,0.85)`) : `rgba(130,160,255,0.10)`;
       g.fillRect(L+j*cw+2, T+i*rh+2, cw-4, rh-4);
-      g.fillStyle = p<0.5?"#e8ecf5":"#8a94a8"; g.textAlign="center";
-      g.fillText(i===j?"—":(p<0.001?"<.001":p.toFixed(3)), L+j*cw+cw/2, T+i*rh+rh/2);
+      g.textAlign="center"; g.fillStyle = "#e8ecf5";
+      g.fillText(ao===null?"—":ao+"–"+bo, L+j*cw+cw/2, T+i*rh+rh/2-6);
+      g.font="9px ui-sans-serif"; g.fillStyle = sig?"#0b1020":"#8a94a8";
+      g.fillText(p<0.001?"p<.001":(sig?"p="+p.toFixed(2):"ns"), L+j*cw+cw/2, T+i*rh+rh/2+8);
+      g.font=(narrow?"10px":"11px")+" ui-sans-serif";
     });
   });
   cv.onmousemove=ev=>{ const b=cv.getBoundingClientRect();
