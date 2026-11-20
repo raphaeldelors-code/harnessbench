@@ -2,10 +2,29 @@
 const PALETTE = ["#4cc9f0","#b57bff","#3ddc84","#ffb020","#ff5d8f","#57d0ff","#9d7bff",
                  "#6fe3a0","#ffd166","#ff8fa3","#8fd3ff"];
 const fmt = n => n==null ? "–" : n.toLocaleString("en-US");
-let DATA, runIdx = 0, hidden = new Set(), charts = {};
+let DATA, runIdx = 1, hidden = new Set(), charts = {};
 
 const $ = s => document.querySelector(s);
-const run = () => DATA.runs[runIdx];
+function crossRun(){
+  /* pseudo-run: best result of each harness across all real runs */
+  const best = {};
+  DATA.runs.forEach(r=>{
+    Object.entries(r.harnesses).forEach(([h,x])=>{
+      const pct = x.resolved / r.n_instances;
+      if(!best[h] || pct > best[h].pct) best[h] = {pct, r, x};
+    });
+  });
+  const harnesses = {}, per = {};
+  Object.entries(best).forEach(([h,b])=>{
+    harnesses[h] = {...b.x, pct: 100*b.pct, src_run: b.r.id};
+    per[h] = b.x.per_instance;
+  });
+  const insts = DATA.runs.reduce((a,r)=> r.n_instances>a.length? r.instances:a, []);
+  return {id:"cross", date:"", model:[...new Set(DATA.runs.map(r=>r.model))].join(", "),
+          n_instances:40, instances:insts, harnesses, windows:{}, mcnemar:{},
+          versions:{note:"each cell = best run for that harness (see bar tooltips for the source run)"}};
+}
+const run = () => runIdx===-1 ? crossRun() : DATA.runs[runIdx];
 const visible = () => harnessNames().filter(h => !hidden.has(h));
 
 function harnessNames(){ return Object.keys(run().harnesses); }
@@ -20,6 +39,9 @@ function mcNemarP(a,b){ const n=a+b; if(!n) return 1;
 /* ---------- chrome ---------- */
 function renderTabs(){
   const t = $("#runTabs"); t.innerHTML="";
+  const c=document.createElement("button"); c.className="tab"+(runIdx===-1?" on":"");
+  c.textContent="∑ cross-run best"; c.onclick=()=>{runIdx=-1; hidden.clear(); renderAll();};
+  t.appendChild(c);
   DATA.runs.forEach((r,i)=>{
     const b=document.createElement("button"); b.className="tab"+(i===runIdx?" on":"");
     b.textContent = r.id.replace(/-strata-iq3s/,"");
@@ -40,14 +62,21 @@ function renderChips(){
 }
 function renderHero(){
   const r=run();
-  const hs=harnessNames().map(h=>({h,res:r.harnesses[h].resolved})).sort((a,b)=>b.res-a.res);
-  $("#hero").innerHTML=`<div class="big">SWE-bench arena · <b>${fmt(r.n_instances)} Verified instances</b> ·
+  const cross=r.id==="cross";
+  const hs=harnessNames().map(h=>({h,v:cross?r.harnesses[h].pct:100*r.harnesses[h].resolved/r.n_instances}))
+          .sort((a,b)=>b.v-a.v);
+  $("#hero").innerHTML=`<div class="big">${cross?"Best of every harness across all runs":"SWE-bench arena"} · <b>${fmt(r.n_instances)} Verified instances</b> ·
     model <b>${r.model}</b> on a single RTX 3090 · <b>${hs.length} harnesses</b></div>
-    <div class="champ"><span class="medal">🏆</span><b>${hs[0].h}</b> leads with
-    <b>${hs[0].res}/${r.n_instances}</b> resolved (${(100*hs[0].res/r.n_instances).toFixed(0)}%)</div>`;
+    <div class="champ"><span class="medal">🏆</span><b>${hs[0].h}</b> leads at
+    <b>${hs[0].v.toFixed(0)}%</b> resolved${cross?"":` (${hs[0].v>0?fmt(Math.round(hs[0].v*r.n_instances/100))+"/"+r.n_instances:"0/"+r.n_instances})`}</div>`;
 }
 function renderVersions(){
   const v=run().versions||{}; const hv=v.harness_versions||{};
+  if(v.note){
+    let h="";
+    Object.entries(run().harnesses).forEach(([k,x])=>h+=row(k, `${x.pct.toFixed(0)}% best · from ${x.src_run}`));
+    $("#versions").innerHTML=h; return;
+  }
   let html="";
   const row=(k,val)=>`<div class="vrow"><b>${k}</b><code>${val}</code></div>`;
   html+=row("model", `${v.model||run().model}<br>${v.model_args||""}`);
@@ -180,11 +209,17 @@ function distChart(){
 /* ---------- master render ---------- */
 function renderAll(){
   renderTabs(); renderChips(); renderHero(); renderVersions();
-  barSorted("#cResolved", h=>h.resolved, "resolved / "+run().n_instances);
+  barSorted("#cResolved", h=> run().id==="cross" ? h.pct : h.resolved,
+    run().id==="cross" ? "resolved %" : "resolved / "+run().n_instances,
+    v=> run().id==="cross" ? v.toFixed(0)+"% (best run)" : fmt(v));
   barSorted("#cThr", h=>h.resolved_per_gpu_h, null, v=>v.toFixed(2)+" resolved / GPU-h");
   barSorted("#cTok", h=>h.input_tokens/1e6, "M input tokens", v=>v.toFixed(1)+"M input tokens");
   barSorted("#cWall", h=>h.wall_s/60, "minutes", v=>Math.round(v)+" min wall");
-  distChart(); drawGrid(); drawMc();
+  const cross=run().id==="cross";
+  document.querySelector("#cDist").closest(".card").style.display = cross?"none":"";
+  document.querySelector("#cMc").closest(".card").style.display = cross?"none":"";
+  if(!cross){ distChart(); drawMc(); }
+  drawGrid();
   $("#foot").innerHTML=`Data regenerated ${DATA.generated} · every run stores exact component versions + config under <code>runs/&lt;id&gt;/data/versions.json</code> · repo: <a href="https://github.com/raphaeldelors-code/harnessbench">harnessbench</a>`;
 }
 
