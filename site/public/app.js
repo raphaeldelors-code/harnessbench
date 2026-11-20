@@ -223,6 +223,21 @@ function renderAll(){
   $("#foot").innerHTML=`Data regenerated ${DATA.generated} · every run stores exact component versions + config under <code>runs/&lt;id&gt;/data/versions.json</code> · repo: <a href="https://github.com/raphaeldelors-code/harnessbench">harnessbench</a>`;
 }
 
+function renderTuning(t){
+  if(!t) return;
+  $("#tuneCard").style.display="";
+  const d=t.decoding||{}, b=t.compare||{};
+  let rows="";
+  const row=(k,val)=>rows+=`<div class="vrow"><b>${k}</b><code>${val}</code></div>`;
+  row("status", t.status||"?");
+  row("baseline decode", (d.baseline_tps?d.baseline_tps.toFixed(1)+" tok/s":"?"));
+  row("best candidate decode", (d.candidates||[]).map(c=>`${c.settings||c.knobs||"?"} → ${c.tps?c.tps.toFixed(1):"?"} tok/s (${c.gain_pct>=0?"+":""}${(c.gain_pct||0).toFixed(1)}%)`).slice(0,4).join("<br>")||"?");
+  row("chosen", t.applied||"?");
+  row("bench delta", Object.entries(b).map(([k,v])=>`${k}: ${typeof v=="number"?(v>=0?"+":"")+v.toFixed(1):JSON.stringify(v)}`).join("<br>")||"?");
+  row("verified at", t.applied_utc||"?");
+  $("#tuneBody").innerHTML=rows;
+}
 fetch("data/site.json").then(r=>r.json()).then(d=>{ DATA=d;
+  fetch("data/tuning.json").then(r=>r.ok?r.json():null).then(t=>renderTuning(t)).catch(()=>{});
   if(location.hash){ const i=DATA.runs.findIndex(r=>r.id===location.hash.slice(1)); if(i>=0) runIdx=i; }
   renderAll(); });
