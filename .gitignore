@@ -1,8 +1,5 @@
-repos/
-work/
-out/
 __pycache__/
-logs/
-*.log
-openai__*.json
-report.txt
+*.pyc
+work/
+repos/
+out/

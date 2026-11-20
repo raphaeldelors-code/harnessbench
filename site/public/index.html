@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HarnessBench — coding-agent arena on one local model</title>
+<meta name="description" content="Reproducible SWE-bench arena: 11 coding harnesses × 1 fixed local model (Strata Qwen3.8-Flash-Next IQ3_S) on a single RTX 3090.">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/chart.umd.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="logo">⚡</span><h1>Harness<span>Bench</span></h1>
+    <p class="tag">one model · many harnesses · fully local</p>
+  </div>
+  <nav id="runTabs" class="tabs"></nav>
+</header>
+
+<main>
+  <section class="hero" id="hero"></section>
+
+  <section class="filters">
+    <span class="filters-label">Harnesses</span>
+    <div id="chips" class="chips"></div>
+    <button id="chipAll" class="chip-btn">all</button>
+  </section>
+
+  <section class="grid">
+    <div class="card wide">
+      <h2>Resolved instances</h2>
+      <div class="chart-box"><canvas id="cResolved"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Throughput <span class="sub">resolved / GPU-hour</span></h2>
+      <div class="chart-box"><canvas id="cThr"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Effort <span class="sub">input tokens (M)</span></h2>
+      <div class="chart-box"><canvas id="cTok"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Wall time per run <span class="sub">minutes</span></h2>
+      <div class="chart-box"><canvas id="cWall"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Per-instance wall <span class="sub">minutes per instance</span></h2>
+      <div class="chart-box"><canvas id="cDist"></canvas></div>
+    </div>
+    <div class="card wide">
+      <h2>Instance grid <span class="sub">R = resolved, E = empty/failed patch</span></h2>
+      <div class="chart-box" style="height:auto"><canvas id="cGrid"></canvas></div>
+    </div>
+    <div class="card wide">
+      <h2>Pairwise significance <span class="sub">McNemar exact p — green: row harness wins, red: loses</span></h2>
+      <div class="chart-box" style="height:auto"><canvas id="cMc"></canvas></div>
+    </div>
+    <div class="card wide">
+      <h2>Run reproducibility <span class="sub">exact component versions + config</span></h2>
+      <div id="versions" class="versions"></div>
+    </div>
+  </section>
+
+  <footer id="foot"></footer>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

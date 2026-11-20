@@ -52,7 +52,7 @@ in the working tree when you are done."""
 # ---- harness registry -------------------------------------------------------
 HARNESSES = {
   "claude-code": {
-    "version": "?",
+    "version": "2.1.326",
     "homes": True,
     "cmd": lambda task: (
       "printf %s \"$HB_TASK\" | claude --verbose --output-format=stream-json "
@@ -69,7 +69,7 @@ HARNESSES = {
     },
   },
   "pi": {
-    "version": "?",
+    "version": "1.5.2",
     "homes": True,
     "cmd": lambda task: (
       "pi --print --mode json --provider rig --model rig/" + MODEL +
@@ -78,7 +78,7 @@ HARNESSES = {
     "env": {},
   },
   "deepseek-harness": {
-    "version": "?",
+    "version": "0.2.2-rc.3",
     "homes": True,
     "cmd": lambda task: (
       "dsh headless --json --permission-mode danger-full-access -- \"$HB_TASK\""
@@ -87,7 +87,7 @@ HARNESSES = {
             "DEEPSEEK_API_KEY": "***"},
   },
   "opencode": {
-    "version": "?",
+    "version": "2.3.0",
     "homes": True,
     "cmd": lambda task: (
       "opencode run --model llamaswap/" + MODEL + " --format json --auto -- \"$HB_TASK\""
@@ -95,7 +95,7 @@ HARNESSES = {
     "env": {},
   },
   "codex": {
-    "version": "?",
+    "version": "0.170.0",
     "homes": True,
     "cmd": lambda task: (
       "printf %s \"$HB_TASK\" | codex exec --json --dangerously-bypass-approvals-and-sandbox"
@@ -103,7 +103,7 @@ HARNESSES = {
     "env": {"OPENAI_API_KEY": "***"},
   },
   "qwen-code": {
-    "version": "?",
+    "version": "0.28.0",
     "homes": True,
     "cmd": lambda task: (
       "qwen -y -p \"$HB_TASK\""
@@ -112,7 +112,7 @@ HARNESSES = {
             "OPENAI_MODEL": MODEL, "QWEN_CODE_SUPPRESS_YOLO_WARNING": "1"},
   },
   "kimi-code": {
-    "version": "?",
+    "version": "2.6.3",
     "homes": True,
     "cmd": lambda task: (
       "kimi -p \"$HB_TASK\" --output-format stream-json"
@@ -120,7 +120,7 @@ HARNESSES = {
     "env": {},
   },
   "grok": {
-    "version": "?",
+    "version": "1.0.89",
     "homes": True,
     "cmd": lambda task: (
       "grok -p \"$HB_TASK\" --always-approve --output-format json --disable-web-search"
@@ -128,7 +128,7 @@ HARNESSES = {
     "env": {},
   },
   "openclaw": {
-    "version": "?",
+    "version": "2026.6.35",
     "homes": True,
     "cmd": lambda task: (
       "openclaw agent --local --json --timeout 2100 --session-id \"hb-$(date +%s%N)\" -m \"$HB_TASK\""
@@ -136,7 +136,7 @@ HARNESSES = {
     "env": {},
   },
   "hermes-agent": {
-    "version": "?",
+    "version": "0.23.1",
     "homes": True,
     "image": "nousresearch/hermes-agent:latest",
     "wd": "/testbed",
@@ -261,10 +261,39 @@ def run_container_harness(harness, iid, tag):
     return {"instance_id": iid, "harness": harness, "wall": round(wall, 1),
             "ec": ec, "patch_bytes": len(patch.encode()), "patch": patch}
 
+def write_versions(od, harness, workers):
+    """Record the exact component versions + config of this run (reproducibility contract)."""
+    import glob
+    def probe(cmd):
+        try:
+            r = sh(["bash", "-c", cmd])
+            return (r.stdout.strip().splitlines() or ["?"])[0]
+        except Exception:
+            return "?"
+    engines = sorted(glob.glob(os.path.expanduser(
+        "~/.local/share/strata/components/engine/*")))
+    hv = {h: HARNESSES[h].get("version", "?") for h in HARNESSES}
+    v = {
+        "model": MODEL,
+        "model_args": os.environ.get("HB_MODEL_ARGS", "?"),
+        "strata_terminal": probe("/opt/strata/terminal/current/bin/strata --version"),
+        "engine": engines[-1].split("/")[-1] if engines else "?",
+        "llama_swap": probe("/opt/llama-swap/llama-swap --version"),
+        "gpu": probe("nvidia-smi --query-gpu=name --format=csv,noheader"),
+        "dataset": os.path.basename(DATASET),
+        "runner_workers": workers,
+        "per_instance_timeout_s": RUN_TIMEOUT,
+        "harness": harness,
+        "harness_versions": hv,
+        "recorded_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    json.dump(v, open(os.path.join(od, "versions.json"), "w"), indent=1)
+
 def cmd_run(a):
     harness = a.harness
     od = os.path.join(OUT, harness)
     os.makedirs(od, exist_ok=True)
+    write_versions(od, harness, getattr(a, "workers", 2))
     insts = load_instances(a.inst or sorted(load_instances(None)))
     preds_path = os.path.join(od, "preds.json")
     preds = json.load(open(preds_path)) if os.path.exists(preds_path) and a.resume else {}

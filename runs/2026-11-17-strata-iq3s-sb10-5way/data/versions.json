@@ -1,0 +1,18 @@
+{
+ "model": "strata_iq3s",
+ "engine": "0.1.59-linux-x86_64-cuda-cuda13",
+ "strata_terminal": "0.2.13",
+ "llama_swap": "v273 (30c7d67)",
+ "model_args": "--context 131072 --parallel 2 --kv k8v4 --vision cpu --mtp; STRATA_ROUTE_PRIOR=0 STRATA_ROUTE_TAIL_SKIP=0",
+ "gpu": "NVIDIA RTX 3090 24GB",
+ "runner_workers": 2,
+ "per_instance_timeout_s": 2700,
+ "dataset": "SWE-bench Verified (10, seed 42)",
+ "harness_versions": {
+  "opencode-ai": "2.3.0",
+  "claude-code": "2.1.326",
+  "pi": "1.5.2",
+  "deepseek-harness": "0.2.2-rc.3",
+  "mini-swe-agent": "unknown"
+ }
+}
