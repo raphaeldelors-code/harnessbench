@@ -10,7 +10,11 @@ data/versions.json. McNemar pairs are recomputed from per-instance grids when
 missing, so every run always has a populated significance chart.
 
 Model run: run.json (kind "model"), data/model_results.json. Rows are grouped
-into input-size cells with per-leg medians; warm-up legs feed tables only.
+into input-size cells with per-leg medians; warm-up legs feed tables only. An
+agentic showdown round passes its `agentic` outcome block through untouched, and
+its agent_phase row is raw-row only — agent-phase telemetry is a different
+measurement condition from a tuning leg, so it joins neither the input-size cells
+nor a model's tuning medians.
 """
 
 from __future__ import annotations
@@ -99,19 +103,33 @@ def is_warm(leg: str) -> bool:
     return leg.startswith("warm")
 
 
+def is_agent(leg: str) -> bool:
+    """The agent_phase leg of an agentic showdown round (schemas/modelrun.schema.json
+    `agentic`): one row of median tok/s measured while mini-swe-agent worked, which is
+    not a tuning-leg measurement. Raw-row only — it never enters cells or medians, so
+    adding showdown rounds cannot move a tuning round's numbers."""
+    return leg == "agent_phase"
+
+
+def is_speed_row(row: dict) -> bool:
+    """A row that measures a served model the way the tuning lane charts it."""
+    leg = row.get("leg") or ""
+    return not is_warm(leg) and not is_agent(leg)
+
+
 def cell_label(in_tok) -> str:
     """Input-size bucket for a row, by nearest thousand tokens."""
     return UNRECORDED if in_tok is None else f"{max(1, int(in_tok / 1000 + 0.5))}k"
 
 
 def model_cells(rows: list[dict]) -> list[dict]:
-    """Per input-size cell, the median pp/tps of each non-warm leg (the rep count
+    """Per input-size cell, the median pp/tps of each measurable leg (the rep count
     tells the reader how much of the noise floor rule that cell actually meets)."""
     buckets: dict[str, dict] = {}
     for row in rows:
-        leg = row.get("leg") or ""
-        if is_warm(leg):
+        if not is_speed_row(row):
             continue
+        leg = row.get("leg") or ""
         bucket = buckets.setdefault(cell_label(row.get("in_tok")), {"in_tok": [], "legs": {}})
         if row.get("in_tok") is not None:
             bucket["in_tok"].append(row["in_tok"])
@@ -144,7 +162,7 @@ def model_run(run_dir: Path, manifest: dict) -> dict | None:
         leg = row.get("leg") or ""
         if not is_warm(leg) and leg not in legs:
             legs.append(leg)
-    return {
+    entry = {
         "id": run_dir.name,
         "kind": "model",
         "date": manifest.get("date", run_dir.name[2:12]),
@@ -154,31 +172,44 @@ def model_run(run_dir: Path, manifest: dict) -> dict | None:
         "verdict": manifest.get("verdict", "INFO"),
         "hardware": manifest.get("hardware", "bench-rig-01"),
         "notes": manifest.get("notes", ""),
-        "n_rows": len(rows),
-        "n_warm": sum(1 for r in rows if is_warm(r.get("leg") or "")),
-        "legs": legs,
-        "rows": rows,
-        "cells": model_cells(rows),
     }
+    agentic = manifest.get("agentic")
+    if agentic:
+        # passed through verbatim: the tally is the eval's, not something to re-derive here
+        entry["agentic"] = agentic
+    entry.update(
+        {
+            "n_rows": len(rows),
+            "n_warm": sum(1 for r in rows if is_warm(r.get("leg") or "")),
+            "legs": legs,
+            "rows": rows,
+            "cells": model_cells(rows),
+        }
+    )
+    return entry
 
 
 def model_summaries(model_runs: list[dict]) -> list[dict]:
-    """Per served model: median decode/prefill over every non-warm row of its
+    """Per served model: median decode/prefill over every tuning-leg row of its
     rounds, plus one verdict entry per round (so the site can show each round's
-    delta against the medians of its sibling rounds)."""
+    delta against the medians of its sibling rounds). Agentic showdown rounds add
+    agentic_runs and best_resolved — their score, not a speed measurement."""
     by_slug: dict[str, dict] = {}
     for mr in model_runs:
         slug = mr["model"].get("slug") or mr["id"]
         entry = by_slug.setdefault(
             slug,
-            {"quant": "", "family": "", "engine": "", "tps": [], "pp": [], "rounds": []},
+            {"quant": "", "family": "", "engine": "", "tps": [], "pp": [], "scores": [], "rounds": []},
         )
         entry["quant"] = entry["quant"] or mr["model"].get("quant", "")
         entry["family"] = entry["family"] or mr["model"].get("family", "")
         entry["engine"] = entry["engine"] or mr.get("engine", "")
-        measured = [r for r in mr["rows"] if not is_warm(r.get("leg") or "")]
+        measured = [r for r in mr["rows"] if is_speed_row(r)]
         entry["tps"].extend(r.get("tps") for r in measured if r.get("tps") is not None)
         entry["pp"].extend(r.get("pp") for r in measured if r.get("pp") is not None)
+        ag = mr.get("agentic")
+        if ag and ag.get("n_instances"):
+            entry["scores"].append(ag.get("resolved", 0) / ag["n_instances"])
         entry["rounds"].append(
             {
                 "id": mr["id"],
@@ -188,6 +219,7 @@ def model_summaries(model_runs: list[dict]) -> list[dict]:
                 "pp": median([r.get("pp") for r in measured]),
                 "n_rows": len(measured),
                 "legs": mr["legs"],
+                "agentic": bool(ag),
             }
         )
     summaries = []
@@ -203,6 +235,8 @@ def model_summaries(model_runs: list[dict]) -> list[dict]:
                 "tps": median(entry["tps"]),
                 "pp": median(entry["pp"]),
                 "tps_range": [min(entry["tps"]), max(entry["tps"])] if entry["tps"] else None,
+                "agentic_runs": len(entry["scores"]),
+                "best_resolved": max(entry["scores"]) if entry["scores"] else None,
                 "verdicts": rounds,
             }
         )

@@ -168,7 +168,7 @@
               "properties": {
                 "id": {"type": "string", "pattern": "^m-"},
                 "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
-                "verdict": {"enum": ["INFO", "KEEP", "CONFIRM-KEEP", "REVERT", "UNDO"]},
+                "verdict": {"enum": ["INFO", "KEEP", "CONFIRM-KEEP", "REVERT", "UNDO", "PASS", "PARTIAL"]},
                 "tps": {"type": ["number", "null"]},
                 "pp": {"type": ["number", "null"]},
                 "n_rows": {
