@@ -12,6 +12,11 @@ single RTX 3090. Patches are graded inside official SWE-bench eval containers.
 Every run stores a manifest + exact component versions, so any number on the
 dashboard can be re-produced on any machine.
 
+The rig also runs a second lane: **model bench** rounds — engine/quantization tuning of
+that same served model (A/B legs, per-prompt-size prefill/decode speed, a hand-written
+KEEP/UNDO verdict). Same repo, same rig record, separate lane on the dashboard, and the
+two lanes' numbers are never compared with each other.
+
 ## Quickstart
 
 ```bash
@@ -55,16 +60,22 @@ bench/           the runner package
   grading.py     official SWE-bench grading + mini-swe-agent lane
   cli.py         `hb` entry point (prep | smoke | run | eval | run-mini | report)
 docker/          Dockerfile.llamaswap + docker-compose.yml (Option A backend)
-runs/<id>/       one folder per experiment
+runs/<id>/       one folder per experiment — harness lane
   run.json       manifest (schema: schemas/run_manifest.schema.json)
   data/results.json     per-harness aggregates + per-instance grid + McNemar pairs
   data/windows_*.jsonl  per-instance wall-time windows
   data/preds_*.json.gz  generated patches (debug aid)
   data/versions.json    exact component versions + config ← reproducibility
+runs/m-<id>/     one folder per model bench round — model lane (kind:"model")
+  run.json       manifest (schema: schemas/modelrun.schema.json) — title, model{slug,quant,
+                 family}, engine, verdict, provenance notes
+  data/model_results.json   rows: {leg, tag, in_tok, out_tok, pp, tps, draft, draft_acc}
 site/            visualization layer (static, zero framework, vendored Chart.js)
   build.py       aggregates runs/*/ + data/hardware.json → site/public/data/site.json
-  public/        dashboard (sectioned nav: Overview / Runs / Rig / Calibration / Methodology)
+  public/        dashboard (two lanes — Harness: Overview / Runs / Rig / Calibration /
+                 Methodology · Models: overview + one tab per round)
 schemas/         JSON Schema for every published data file (validated in CI)
+docs/            METHODOLOGY.md (both lanes, verdicts, noise floor) · DATA_INVENTORY.md
 tools/           validate_data.py, smoke.py (headless browser, desktop+phone), hooks
 scripts/         portable runtime setup (node 22 + pinned harness CLIs)
 data/hardware.json  the bench rig spec (CPU, RAM, GPU, PCIe gen/lanes, board)
@@ -86,6 +97,13 @@ data/hardware.json  the bench rig spec (CPU, RAM, GPU, PCIe gen/lanes, board)
   detection flags phases with no LLM traffic.
 - **Significance:** exact two-sided McNemar on identical instances between
   harness pairs (heat map per run on the dashboard).
+- **Model lane, separately:** a round compares engine legs inside one prompt-size cell on
+  prefill/decode speed, with a hand-written KEEP/REVERT/UNDO verdict and warm-up rows kept out of
+  every median. It measures speed only — no task quality, and its tok/s are not comparable to the
+  harness lane's resolved %.
+
+The long version — including the noise-floor rule (median over ≥3 reps per cell) and an explicit
+list of what neither lane claims — is [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 ## Reproducibility & quality gates
 
@@ -135,4 +153,5 @@ data/hardware.json  the bench rig spec (CPU, RAM, GPU, PCIe gen/lanes, board)
 ## Contribute
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) — a new harness is one registry entry in
-`bench/harnesses.py`; a new model is one llama-swap entry.
+`bench/harnesses.py`; a new model is one llama-swap entry; a new model bench round is one
+`runs/m-<id>/` dir with a manifest and its captured rows (no site code involved).

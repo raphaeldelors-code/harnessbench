@@ -195,7 +195,9 @@
           <li><b>Significance.</b> Pairwise exact two-sided McNemar on discordant resolved counts (heat map in each run).</li>
           <li><b>Telemetry.</b> Per-instance wall windows and llama-swap token counters (input / output / cache) recorded for every attempt.</li>
           <li><b>Reproducible.</b> Each run stores an <code>run.json</code> manifest + exact component versions; raw preds are gzip-persisted.</li>
+          <li><b>Two bench lanes, never mixed.</b> The Harness lane fixes the model and varies the agent. The Models lane fixes the agent layer and varies the engine (quantization / settings): legs compared inside one prompt-size cell on prefill and decode speed, verdict written by hand. Speed only — no task quality, and its tok/s are not comparable to resolved % or to another model.</li>
         </ul>
+        <p class="dim note">Long version — including the model lane's noise-floor rule (median over ≥3 reps per cell) and what neither lane claims: <code>docs/METHODOLOGY.md</code> in the source repository.</p>
       </div>
     </div>
   </section>

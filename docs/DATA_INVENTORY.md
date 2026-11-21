@@ -10,7 +10,9 @@ fixed model); an `m-<date>-…` dir is a *model* run (engine/quantization tuning
 model). The manifest's optional `kind` decides; when it is absent the `m-` id prefix is the
 fallback and anything else is `harness`, so every run merged before the lane existed still
 aggregates unchanged. They share the directory shape but not the data files — see
-[Model-bench layer](#model-bench-layer-runs-m-id) below.
+[Model-bench layer](#model-bench-layer-runs-m-id) below. This file is the *what*; the *why* —
+verdict vocabulary, the noise-floor rule, and what neither lane is allowed to claim — is in
+[METHODOLOGY.md](METHODOLOGY.md).
 
 ## Cleanup sweep (2026-11-21)
 

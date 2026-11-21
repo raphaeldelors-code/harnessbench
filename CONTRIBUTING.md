@@ -18,7 +18,7 @@ Thanks for making the harness arena bigger 🙌
 5. `make build && make validate && make smoke` and push — the dashboard picks
    the new harness up.
 
-## Add a model
+## Add a model to the harness lane
 
 1. Serve it via the backend DI seam: add it to your llama-swap config
    (`docker/config/llama-swap.yaml` for Option A) or point `HB_BACKEND_URL` /
@@ -27,7 +27,35 @@ Thanks for making the harness arena bigger 🙌
 3. Name the run `runs/<date>-<model>-sbNN-<n>way/`, write its `run.json`
    manifest, `make build`.
 
+## Add a model bench round
+
+A model round is an engine/quantization tuning experiment on one served model — see
+[docs/METHODOLOGY.md](docs/METHODOLOGY.md), "Model bench lane". No runner is involved: you
+import a capture you already measured.
+
+1. **Run dir + id:** `runs/m-<date>-<slug>/` — the `m-` prefix is the lane marker (`kind` below is
+   what actually decides it; the prefix is the fallback and keeps the two lanes unambiguous in
+   listings). Ids are `m-YYYY-MM-DD-<slug>`, one dir per round; never overwrite a previous round.
+2. **`run.json`** — model-run manifest (`schemas/modelrun.schema.json`): `schema_version`
+   `hb-modelrun-v1`, `id`, `kind:"model"`, `date`, `title`, `model{slug,quant,family}`, `engine`,
+   `verdict`, `hardware` (rig id, `bench-rig-01`), `notes` (provenance: where the raw capture came
+   from and when it was captured).
+3. **`data/model_results.json`** (`schemas/model_results.schema.json`) —
+   `{"rows":[{leg, tag, in_tok, out_tok, pp, tps, draft, draft_acc}]}`, one record per measurement.
+   Copy the capture's own labels: keep `tag` verbatim, derive `leg` mechanically (a `warm*` tag keeps
+   leg `warm*`, otherwise the prefix before the first `-`). **Never invent leg names, leg meanings or
+   flag settings** — if the capture does not say what a leg changed, the round simply does not know,
+   and `notes` should say so.
+4. **`verdict`** is yours to write, by hand, from the enum `INFO / KEEP / CONFIRM-KEEP / REVERT /
+   UNDO`. The pipeline never computes one; a capture with no decision recorded is `INFO`. It only
+   counts as a citable decision if the round clears the noise floor (median over ≥3 reps per cell,
+   warm rows excluded) — record what the round actually holds if it doesn't.
+5. `make build && make validate && make smoke` — `build.py` folds the round into `model_runs[]` /
+   `models[]`, and a new round needs no site code: the tab, banners, charts and tables are derived.
+
 ## Reproducibility contract (required for every merged run)
+
+Harness lane:
 
 - `runs/<id>/run.json` — manifest validated against `schemas/run_manifest.schema.json`.
 - `runs/<id>/data/versions.json` — model + model_args, inference stack versions,
@@ -35,6 +63,12 @@ Thanks for making the harness arena bigger 🙌
 - One model per run; harnesses are the only variable.
 - Grading only via the official grader (`hb eval`), never harness self-report.
 - Keep `results.json` schema stable (harnesses/instances/mcnemar) — the site reads it.
+
+Model lane (no `versions.json` — the manifest carries the pins instead):
+
+- `runs/m-<id>/run.json` with `kind:"model"`, `model{slug,quant,family}`, `engine`, `verdict`.
+- `runs/m-<id>/data/model_results.json` with the capture's rows and mechanically-derived legs.
+- Provenance in `notes`, and the raw capture stays out of the repo (import it, don't commit it).
 
 ## Style & gates
 
