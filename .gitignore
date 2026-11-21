@@ -4,3 +4,5 @@ work/
 repos/
 out/
 smoke/
+/seed/
+.cc_run.log

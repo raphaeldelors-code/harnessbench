@@ -1,11 +1,33 @@
 # Data inventory & gap analysis
 
-Generated 2026-11-20 from the actual files in `runs/*/` (3 runs); usage matrix refreshed
+Generated 2026-11-20 from the actual files in `runs/*/` (3 harness runs); usage matrix refreshed
 2026-11-21 (failure-mix + calls-per-resolved charts, comparability line, Decode speed removed).
 "On site" = currently rendered in a chart, table or panel at
 https://raphaeldelors-code.github.io/harnessbench/.
 
-## Files captured per run (`runs/<id>/data/`)
+`runs/` holds **two lanes**. A `<id>`-prefixed dir is a *harness* run (coding-harness comparison
+on a fixed model, `kind` absent ⇒ `harness`); an `m-<id>` dir is a *model* run (engine/quantization
+tuning round of one local model). They share the directory shape but not the data files — see
+[Model-bench layer](#model-bench-layer-runs-m-id) below.
+
+## Cleanup sweep (2026-11-21)
+
+Removed, each after grepping every reference in tracked files (docs, Makefile, CI, `bench/`,
+`site/`, `tools/`, `scripts/`) and finding none:
+
+| Removed | Why it was dead |
+|---|---|
+| `charts/leaderboard.png`, `charts/leaderboard_efficiency.png` | PNGs emitted by the retired matplotlib publish pipeline (`scripts/publish_std.py`, `render_charts*.py`, deleted in `cbedfb7`); the site renders the same numbers live from `site.json` and nothing referenced the images |
+| `data/instances/new30.txt` | 30-instance id list for the deleted `scripts/sweep50*.sh` sweeps; the live dataset is `data/instances/sb40_new.json`, which `bench/config.py` points at |
+
+Also ignored from now on: `/seed/` (raw engine-bench output handed over for import — never a
+tracked input, no tracked file may read from it) and `.cc_run.log`.
+
+Kept on purpose: `runs/*/data/eval_<h>.json` (raw grading provenance for the 2026-11-17 run even
+though nothing renders it), `data/instances/sb40_new.json`, `docker/`, `scripts/setup_hb*.sh`
+(referenced by README/CONTRIBUTING), `bench/` package, `Makefile`, `.github/workflows/ci.yml`.
+
+## Files captured per harness run (`runs/<id>/data/`)
 
 | File | What it holds |
 |---|---|
@@ -41,7 +63,36 @@ https://raphaeldelors-code.github.io/harnessbench/.
 | model_patch (full diff text) | preds json.gz | ❌ (kept for re-evaluation) | — |
 | eval_<h>.json detail | 2026-11-17 run only | ❌ | — |
 
-## Gap analysis — unused fields worth leveraging
+## Model-bench layer (`runs/m-<id>/`)
+
+A model run answers a different question: *did this engine/quantization setting make the served
+model faster?* One round = several **legs** (baseline vs treatment, labelled exactly as the raw
+capture labelled them) measured over a few input-size **cells**. No harnesses, no instances, no
+grading — the metric is prefill speed (`pp`, input tok/s) and decode speed (`tps`, output tok/s).
+
+| File | What it holds |
+|---|---|
+| `run.json` | model-run manifest: `schema_version` (`hb-modelrun-v1`), `id` (`m-<date>-<slug>`), `kind:"model"`, `date`, `title`, `model{slug,quant,family}`, `engine`, `verdict` (INFO / KEEP / CONFIRM-KEEP / REVERT / UNDO), `hardware` (rig id), `notes` (provenance) — schema: `schemas/modelrun.schema.json` |
+| `data/model_results.json` | `{"rows":[{leg, tag, in_tok, out_tok, pp, tps, draft, draft_acc}]}` — one record per measurement; `tag` is the raw capture label, `leg` the group it belongs to (schema: `schemas/model_results.schema.json`) |
+
+Leg/tag convention (mechanical, never invented): a row tagged `warm` keeps leg `warm`; every other
+tag's leg is its prefix before the first `-` (`a-1` → `a`, `a2-3` → `a2`, bare `1` → `1`). Warm-up
+rows stay in the tables and are excluded from charts and medians — they are cold-load artifacts, not
+comparable measurements. **Leg meanings are not recorded in the source capture**, so the site shows
+leg names without interpreting them as flag settings.
+
+What `site/build.py` derives for this lane (both keys live next to `runs` in `site.json`):
+
+| site.json key | Contents |
+|---|---|
+| `model_runs[]` | manifest fields + every `rows` record + `cells[]`: per input-size bucket (`1k`/`2k`/`4k`, or `unrecorded` when the capture stored no `in_tok`) the median `pp`/`tps` and rep count per non-warm leg |
+| `models[]` | per `model.slug`: median decode `tps` and prefill `pp` over all non-warm rows of that model's rounds, plus `verdicts[]` (one entry per round: id, date, verdict, that round's medians) |
+
+Fields **not captured** for model runs today, and not to be back-filled by inference: the engine
+flags each leg changed (only the round title and verdict survive), GPU-side stats (VRAM, queue
+depth, TTFT), and any quality/task score for the quantization — this lane measures speed only.
+
+## Gap analysis — unused harness fields worth leveraging
 
 1. **`calls` → API efficiency.** `calls / resolved` gives "LLM requests per solved instance"
    (codex ≈ 63 vs hermes-agent ≈ 145 on run 3 — a real cost-per-win signal). Implemented
@@ -77,6 +128,10 @@ are stored today; per-instance would need the harness-side counters we don't all
 - Every `run.json` manifest carries `"hardware": "<rig id>"`; `schemas/run_manifest.schema.json`
   enforces the id pattern, and `tools/validate_data.py` fails CI if a manifest references a rig
   id that doesn't exist in `data/hardware.json` or if `data/versions.json` is missing.
+- Model-run manifests carry the same `"hardware"` field and are checked the same way;
+  `schemas/modelrun.schema.json` pins it to `bench-rig-01`. `data/versions.json` is a
+  harness-lane requirement (per-harness component pins) — model runs record their engine and
+  quantization in the manifest itself instead.
 - For a hardware change: add/replace a rig record (e.g. `data/rigs/bench-rig-02.json`), new
   runs reference the new id — old runs keep pointing at `bench-rig-01`, so cross-run charts
   always know what machine produced each number.
