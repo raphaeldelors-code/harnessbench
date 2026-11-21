@@ -1,0 +1,44 @@
+{
+  "rows": [
+    {
+      "leg": "warm",
+      "tag": "warm",
+      "in_tok": null,
+      "out_tok": null,
+      "pp": 92.8,
+      "tps": 51.9,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "1",
+      "tag": "1",
+      "in_tok": null,
+      "out_tok": null,
+      "pp": 246.3,
+      "tps": 51.1,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "2",
+      "tag": "2",
+      "in_tok": null,
+      "out_tok": null,
+      "pp": 462.6,
+      "tps": 56.9,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "3",
+      "tag": "3",
+      "in_tok": null,
+      "out_tok": null,
+      "pp": 865.2,
+      "tps": 54.2,
+      "draft": null,
+      "draft_acc": null
+    }
+  ]
+}

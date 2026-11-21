@@ -1,0 +1,16 @@
+{
+  "schema_version": "hb-modelrun-v1",
+  "id": "m-2026-11-14-iq4d",
+  "kind": "model",
+  "date": "2026-11-14",
+  "title": "Engine tuning round — iq4d",
+  "model": {
+    "slug": "strata_iq4_xs",
+    "quant": "IQ4_XS (94 GB MoE)",
+    "family": "local"
+  },
+  "engine": "strata (llama.cpp fork) via llama-swap",
+  "verdict": "KEEP",
+  "hardware": "bench-rig-01",
+  "notes": "provenance: /var/tmp/iq4d/results/run.jsonl captured 2026-11-14 on bench-rig-01; leg semantics not recorded"
+}

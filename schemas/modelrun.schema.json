@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "harnessbench model-run manifest (model bench lane)",
+  "description": "Manifest for runs/<id>/run.json whose kind is \"model\": one engine/quantization tuning round of a single local model. Measurement rows live in data/model_results.json (schemas/model_results.schema.json).",
+  "type": "object",
+  "required": ["schema_version", "id", "kind", "date", "title", "model", "engine", "verdict", "hardware", "notes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "hb-modelrun-v1"},
+    "id": {"type": "string", "pattern": "^m-[0-9]{4}-[0-9]{2}-[0-9]{2}-.+"},
+    "kind": {"const": "model"},
+    "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "title": {"type": "string", "minLength": 1},
+    "model": {
+      "type": "object",
+      "required": ["slug", "quant", "family"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": {"type": "string", "minLength": 1, "description": "served model id as recorded by the capture"},
+        "quant": {"type": "string", "minLength": 1, "description": "quantization build under test, as recorded"},
+        "family": {"type": "string", "minLength": 1, "description": "local | hosted — what the number was produced on"}
+      }
+    },
+    "engine": {"type": "string", "minLength": 1, "description": "inference engine and how it was reached (never a flag list: legs are recorded without their settings)"},
+    "verdict": {
+      "enum": ["INFO", "KEEP", "CONFIRM-KEEP", "REVERT", "UNDO"],
+      "description": "manual decision recorded for the round; INFO when the capture recorded none"
+    },
+    "hardware": {"const": "bench-rig-01", "description": "rig id referencing data/hardware.json"},
+    "notes": {"type": "string", "description": "provenance of the raw capture"}
+  }
+}

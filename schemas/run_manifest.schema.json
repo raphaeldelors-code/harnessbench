@@ -1,10 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "harnessbench run manifest",
+  "title": "harnessbench run manifest (harness bench lane)",
+  "description": "Manifest for runs/<id>/run.json on the harness lane. kind is optional and defaults to \"harness\"; a manifest with kind \"model\" is validated by schemas/modelrun.schema.json instead.",
   "type": "object",
   "required": ["schema_version", "id", "date", "model", "hardware", "dataset"],
   "properties": {
     "schema_version": {"const": "hb-run-v1"},
+    "kind": {"const": "harness", "description": "bench lane; absent means \"harness\" (backward compatible)"},
     "id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+"},
     "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
     "model": {"type": "string"},

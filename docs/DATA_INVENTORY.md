@@ -5,9 +5,11 @@ Generated 2026-11-20 from the actual files in `runs/*/` (3 harness runs); usage 
 "On site" = currently rendered in a chart, table or panel at
 https://raphaeldelors-code.github.io/harnessbench/.
 
-`runs/` holds **two lanes**. A `<id>`-prefixed dir is a *harness* run (coding-harness comparison
-on a fixed model, `kind` absent ⇒ `harness`); an `m-<id>` dir is a *model* run (engine/quantization
-tuning round of one local model). They share the directory shape but not the data files — see
+`runs/` holds **two lanes**. A `<date>-…` dir is a *harness* run (coding-harness comparison on a
+fixed model); an `m-<date>-…` dir is a *model* run (engine/quantization tuning round of one local
+model). The manifest's optional `kind` decides; when it is absent the `m-` id prefix is the
+fallback and anything else is `harness`, so every run merged before the lane existed still
+aggregates unchanged. They share the directory shape but not the data files — see
 [Model-bench layer](#model-bench-layer-runs-m-id) below.
 
 ## Cleanup sweep (2026-11-21)
@@ -81,12 +83,16 @@ rows stay in the tables and are excluded from charts and medians — they are co
 comparable measurements. **Leg meanings are not recorded in the source capture**, so the site shows
 leg names without interpreting them as flag settings.
 
+`tools/validate_data.py` dispatches on that lane too: a model manifest is validated against
+`schemas/modelrun.schema.json` and must ship `data/model_results.json` (validated against
+`schemas/model_results.schema.json`), while `data/versions.json` stays a harness-lane requirement.
+
 What `site/build.py` derives for this lane (both keys live next to `runs` in `site.json`):
 
 | site.json key | Contents |
 |---|---|
-| `model_runs[]` | manifest fields + every `rows` record + `cells[]`: per input-size bucket (`1k`/`2k`/`4k`, or `unrecorded` when the capture stored no `in_tok`) the median `pp`/`tps` and rep count per non-warm leg |
-| `models[]` | per `model.slug`: median decode `tps` and prefill `pp` over all non-warm rows of that model's rounds, plus `verdicts[]` (one entry per round: id, date, verdict, that round's medians) |
+| `model_runs[]` | manifest fields (`kind:"model"`, `verdict`, `model{…}`, …) + `n_rows`, `n_warm`, `legs[]` + every `rows` record + `cells[]`: per input-size bucket (`1k`/`2k`/`4k`, or `unrecorded` when the capture stored no `in_tok`) the median `in_tok` and, per non-warm leg, the median `pp`/`tps` with its rep count |
+| `models[]` | per `model.slug`: `quant`/`family`/`engine`, `n_runs`, median decode `tps` and prefill `pp` over all non-warm rows of that model's rounds (`tps_range` gives spread), plus `verdicts[]` — one entry per round: id, date, verdict, that round's medians, row count and legs |
 
 Fields **not captured** for model runs today, and not to be back-filled by inference: the engine
 flags each leg changed (only the round title and verdict survive), GPU-side stats (VRAM, queue

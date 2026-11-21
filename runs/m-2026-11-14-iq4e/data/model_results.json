@@ -1,0 +1,124 @@
+{
+  "rows": [
+    {
+      "leg": "warm",
+      "tag": "warm",
+      "in_tok": 676,
+      "out_tok": 16,
+      "pp": 177.5,
+      "tps": 50.5,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "a1",
+      "tag": "a1-1",
+      "in_tok": 686,
+      "out_tok": 512,
+      "pp": 282.3,
+      "tps": 55.4,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "a1",
+      "tag": "a1-2",
+      "in_tok": 2286,
+      "out_tok": 512,
+      "pp": 494.8,
+      "tps": 59.8,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "a1",
+      "tag": "a1-3",
+      "in_tok": 4443,
+      "out_tok": 512,
+      "pp": 894.1,
+      "tps": 59.1,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "warm2",
+      "tag": "warm2",
+      "in_tok": 676,
+      "out_tok": 16,
+      "pp": 68.6,
+      "tps": 43.9,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "b",
+      "tag": "b-1",
+      "in_tok": 687,
+      "out_tok": 512,
+      "pp": 233.4,
+      "tps": 51.1,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "b",
+      "tag": "b-2",
+      "in_tok": 2287,
+      "out_tok": 512,
+      "pp": 463.3,
+      "tps": 57,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "b",
+      "tag": "b-3",
+      "in_tok": 4445,
+      "out_tok": 512,
+      "pp": 849.7,
+      "tps": 55.6,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "warm3",
+      "tag": "warm3",
+      "in_tok": 676,
+      "out_tok": 16,
+      "pp": 62.7,
+      "tps": 36.1,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "a2",
+      "tag": "a2-1",
+      "in_tok": 686,
+      "out_tok": 512,
+      "pp": 237.2,
+      "tps": 52.2,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "a2",
+      "tag": "a2-2",
+      "in_tok": 2288,
+      "out_tok": 512,
+      "pp": 476.4,
+      "tps": 57.6,
+      "draft": null,
+      "draft_acc": null
+    },
+    {
+      "leg": "a2",
+      "tag": "a2-3",
+      "in_tok": 4444,
+      "out_tok": 512,
+      "pp": 853.3,
+      "tps": 57.8,
+      "draft": null,
+      "draft_acc": null
+    }
+  ]
+}
