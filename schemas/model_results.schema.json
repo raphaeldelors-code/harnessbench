@@ -17,13 +17,13 @@
           "leg": {
             "type": "string",
             "minLength": 1,
-            "description": "group this measurement belongs to — the tag prefix before the first dash (a-1 -> a, a1-2 -> a1); warm-up rows keep leg \"warm\""
+            "description": "group this measurement belongs to — the tag prefix before the first dash (a-1 -> a, a1-2 -> a1); warm-up rows keep leg \"warm\", agentic showdown rounds keep leg \"agent_phase\""
           },
           "tag": {"type": "string", "minLength": 1, "description": "raw label from the capture, verbatim"},
           "in_tok": {"type": ["integer", "null"], "minimum": 0, "description": "prompt tokens actually processed; null when the capture did not record it"},
           "out_tok": {"type": ["integer", "null"], "minimum": 0, "description": "generated tokens; null when the capture did not record it"},
-          "pp": {"type": "number", "exclusiveMinimum": 0, "description": "prefill speed — input tokens/s"},
-          "tps": {"type": "number", "exclusiveMinimum": 0, "description": "decode speed — output tokens/s"},
+          "pp": {"type": ["number", "null"], "exclusiveMinimum": 0, "description": "prefill speed — input tokens/s; null only on an agent_phase row whose telemetry was not captured (rows: [] is not allowed, so such a round carries one null-speed row)"},
+          "tps": {"type": ["number", "null"], "exclusiveMinimum": 0, "description": "decode speed — output tokens/s; null under the same condition as pp"},
           "draft": {"type": ["integer", "null"], "minimum": 0, "description": "draft tokens offered, only recorded by speculative-decoding rounds"},
           "draft_acc": {"type": ["integer", "null"], "minimum": 0, "description": "accepted draft tokens"}
         }

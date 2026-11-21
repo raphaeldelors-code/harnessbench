@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "harnessbench model-run manifest (model bench lane)",
-  "description": "Manifest for runs/<id>/run.json whose kind is \"model\": one engine/quantization tuning round of a single local model. Measurement rows live in data/model_results.json (schemas/model_results.schema.json).",
+  "description": "Manifest for runs/<id>/run.json whose kind is \"model\": one engine/quantization tuning round of a single local model, or one agentic showdown round (optional `agentic` block). Measurement rows live in data/model_results.json (schemas/model_results.schema.json).",
   "type": "object",
   "required": ["schema_version", "id", "kind", "date", "title", "model", "engine", "verdict", "hardware", "notes"],
   "additionalProperties": false,
@@ -23,10 +23,43 @@
     },
     "engine": {"type": "string", "minLength": 1, "description": "inference engine and how it was reached (never a flag list: legs are recorded without their settings)"},
     "verdict": {
-      "enum": ["INFO", "KEEP", "CONFIRM-KEEP", "REVERT", "UNDO"],
-      "description": "manual decision recorded for the round; INFO when the capture recorded none"
+      "enum": ["INFO", "KEEP", "CONFIRM-KEEP", "REVERT", "UNDO", "PASS", "PARTIAL"],
+      "description": "manual decision recorded for the round; INFO when the capture recorded none. Showdown rounds read from the recorded score instead: PASS (>=3 resolved of 10), PARTIAL (1-2), INFO (0)"
     },
     "hardware": {"const": "bench-rig-01", "description": "rig id referencing data/hardware.json"},
-    "notes": {"type": "string", "description": "provenance of the raw capture"}
+    "notes": {"type": "string", "description": "provenance of the raw capture"},
+    "agentic": {
+      "type": "object",
+      "description": "Present only on agentic showdown rounds (mini-swe-agent x SWE-bench Verified): the outcome tally of one model over the instance set. Tuning rounds never carry it. Counts come from the official swebench eval report JSONs, per-instance credit from the partial-credit re-score tables.",
+      "required": ["n_instances", "resolved", "unresolved", "empty", "per_instance"],
+      "additionalProperties": false,
+      "properties": {
+        "steps_cap": {"type": ["integer", "null"], "minimum": 1, "description": "agent step cap for the round; null when the capture did not record it"},
+        "temperature": {"type": ["number", "null"], "minimum": 0, "description": "sampling temperature; null when the capture did not record it"},
+        "n_instances": {"type": "integer", "minimum": 1, "description": "instances in the set (the sb10 set is 10)"},
+        "resolved": {"type": "integer", "minimum": 0, "description": "instances the official eval marked resolved"},
+        "unresolved": {"type": "integer", "minimum": 0, "description": "instances with a submitted patch that the official eval did not resolve"},
+        "empty": {"type": "integer", "minimum": 0, "description": "empty patches: no submission, in practice the step cap hit without one"},
+        "partial_credit": {"type": ["number", "null"], "minimum": 0, "description": "sum of per-instance F2P fraction over the set (resolved 1.0, empty 0); null when this round was never re-scored"},
+        "gpu_hours": {"type": ["number", "null"], "minimum": 0, "description": "agent-phase wall time in GPU hours, as the capture recorded it"},
+        "resolved_per_gpu_h": {"type": ["number", "null"], "minimum": 0, "description": "resolved per GPU hour, as the capture recorded it"},
+        "per_instance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["instance", "result"],
+            "additionalProperties": false,
+            "properties": {
+              "instance": {"type": "string", "minLength": 1, "description": "SWE-bench instance id, verbatim as the eval recorded it"},
+              "result": {"enum": ["resolved", "unresolved", "empty"], "description": "official eval report JSON for this instance; no report at all means no patch was submitted"},
+              "steps": {"type": ["integer", "null"], "minimum": 0, "description": "agent steps used; null when the capture did not record it for this instance"},
+              "credit": {"type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "F2P fraction from the partial-credit table; null when this round was never re-scored"},
+              "patch": {"type": ["boolean", "null"], "description": "a patch was submitted; null when the capture did not record it"}
+            }
+          }
+        }
+      }
+    }
   }
 }
