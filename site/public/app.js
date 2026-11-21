@@ -11,6 +11,7 @@ const ORGB = {R:"61,220,132", E:"255,93,93", T:"255,176,32", U:"130,160,255"};
 const OALPHA = {R:.85, E:.5, T:.65, U:.14};
 const fmt = n => n==null ? "–" : n.toLocaleString("en-US");
 const fmt1 = n => n==null ? "–" : n.toFixed(1);
+const fmt2 = n => n==null ? "–" : n.toFixed(2);
 let DATA, lane = "harness", section = "overview", runIdx = 0, hidden = new Set(), charts = {};
 let modelIdx = 0, modelView = "overview", hiddenLegs = new Set();
 
@@ -120,14 +121,23 @@ function renderHero(){
 /* ---------- models lane: model bench (engine / quantization tuning rounds) ----------
    A model round asks one question: did this engine setting make the served model faster?
    Legs are compared inside input-size cells; warm-up rows stay in the table only.
-   Nothing here is a quality or cross-model claim — the metric is tok/s on one rig. */
-const VGOOD = ["KEEP","CONFIRM-KEEP"], VBAD = ["UNDO","REVERT"];
-const vclass = v => VGOOD.includes(v) ? "keep" : (VBAD.includes(v) ? "undo" : "info");
-const vdot = v => ({keep:"#3ddc84", undo:"#ff5d5d", info:"#8a94a8"})[vclass(v)];
+   Nothing here is a quality or cross-model claim — the metric is tok/s on one rig.
+   Agentic showdown rounds (manifest `agentic`) ask a different question (see renderShowdown),
+   so they get their own tab and never join a tuning chart, cell or median. */
+const VGOOD = ["KEEP","CONFIRM-KEEP","PASS"], VBAD = ["UNDO","REVERT"], VPART = ["PARTIAL"];
+const vclass = v => VGOOD.includes(v) ? "keep" : (VBAD.includes(v) ? "undo"
+  : (VPART.includes(v) ? "partial" : "info"));      // PASS/PARTIAL grade a showdown score, no tuning verdict is in those lists
+const vdot = v => ({keep:"#3ddc84", undo:"#ff5d5d", partial:"#ffb020", info:"#8a94a8"})[vclass(v)];
 const pill = v => `<span class="pill ${vclass(v)}">${v}</span>`;
 const isWarm = leg => leg.startsWith("warm");
 const mrun = () => (DATA.model_runs||[])[modelIdx];
 const shortId = id => id.replace(/^m-\d{4}-\d{2}-\d{2}-/,"");
+const sdRuns = () => (DATA.model_runs||[]).filter(m=>m.agentic);
+const SD_CHARTS = ["#sdResolved","#sdEff"];
+/* the artifact round a showdown card belongs to: id minus its date prefix and its model-slug
+   suffix ("m-2026-11-14-run7-strata_iq3s" → "run7"); falls back to the whole short id */
+const runLabel = m => { const s = shortId(m.id), slug = (m.model||{}).slug||"";
+  return slug && s.endsWith("-"+slug) ? (s.slice(0, -slug.length-1) || s) : s; };
 function medianOf(vs){
   const v = vs.filter(x=>x!=null).sort((a,b)=>a-b);
   if(!v.length) return null;
@@ -139,24 +149,36 @@ function medOf(m, leg, key){ return medianOf(m.cells.map(c=>c.legs[leg] ? c.legs
 function renderModelHero(){
   const mrs = DATA.model_runs||[], models = DATA.models||[];
   const nRows = mrs.reduce((a,m)=>a+m.n_rows,0), nWarm = mrs.reduce((a,m)=>a+m.n_warm,0);
+  const nSd = mrs.filter(m=>m.agentic).length, nTune = mrs.length-nSd;
   const gpu = (DATA.hardware||{}).gpu?.model || "local GPU";
   const rigs = [...new Set(mrs.map(m=>m.hardware).filter(Boolean))].join(", ")||"bench-rig-01";
   const served = models.map(m=>`${m.slug}${m.quant?" · "+m.quant:""}`).join(", ");
-  const nKeep = mrs.filter(m=>vclass(m.verdict)==="keep").length;
-  $("#hero").innerHTML=`<div class="big">${mrs.length} tuning rounds · ${nRows} captured rows (${nWarm} warm-up, table only) · ${models.length} served model${models.length===1?"":"s"}
+  const tune = mrs.filter(m=>!m.agentic);
+  const nKeep = tune.filter(m=>vclass(m.verdict)==="keep").length;   // "kept" is a tuning decision: a showdown PASS kept nothing
+  const sd = mrs.filter(m=>m.agentic);
+  const nPass = sd.filter(m=>vclass(m.verdict)==="keep").length;     // PASS grade = 3+ resolved
+  const scored = models.filter(m=>m.best_resolved!=null).sort((a,b)=>b.best_resolved-a.best_resolved);
+  const best = scored[0];
+  $("#hero").innerHTML=`<div class="big">${nTune} tuning rounds · ${nSd} agentic showdown rounds · ${nRows} captured rows (${nWarm} warm-up, table only) · ${models.length} served model${models.length===1?"":"s"}
     <b>${served||"—"}</b> on a single ${gpu} <span class="dim">(${rigs})</span></div>
-    <div class="champ"><span class="medal">⚙</span>${mrs.map(m=>`<span class="pill ${vclass(m.verdict)}">${m.verdict}</span>`).join(" ")}
-    <span class="dim">speed only — this lane makes no task-quality claim</span>${nKeep?` · <b>${nKeep}</b> kept`:``}</div>`;
+    <div class="champ"><span class="medal">⚙</span>${tune.map(m=>`<span class="pill ${vclass(m.verdict)}">${m.verdict}</span>`).join(" ")}
+    <span class="dim">tuning rounds are speed only — no task-quality claim</span>${nKeep?` · <b>${nKeep}</b> kept`:``}</div>
+    ${nSd?`<div class="champ"><span class="medal">⚔</span>showdown best: <b>${best.slug}</b> <b>${(best.best_resolved*100).toFixed(0)}%</b> resolved
+      <span class="dim">(${scored.length} served model${scored.length===1?"":"s"} scored over ${nSd} rounds, <b>${nPass}</b> at 3+ resolved — Showdown tab)</span></div>`:""}`;
 }
 function renderModels(){
   const mrs = DATA.model_runs||[];
   if(modelIdx>=mrs.length) modelIdx = 0;
+  if(modelView==="showdown" && !mrs.some(m=>m.agentic)) modelView = "overview";
   renderModelTabs();
   const inRun = modelView==="run" && mrs.length>0;
   $("#modelBanner").hidden = !inRun;
-  $("#modelOverview").hidden = !!inRun;
+  $("#modelOverview").hidden = modelView!=="overview";
+  $("#modelShowdown").hidden = modelView!=="showdown";
   $("#modelRunView").hidden = !inRun;
-  if(inRun) renderModelRun(mrun()); else renderModelOverview();
+  if(modelView==="showdown") renderShowdown();
+  else if(inRun) renderModelRun(mrun());
+  else renderModelOverview();
 }
 function renderModelTabs(){
   /* pseudo-run tabs, exactly like #runTabs: buttons switch state, no hash churn */
@@ -167,6 +189,8 @@ function renderModelTabs(){
     b.onclick=fn; t.appendChild(b);
   };
   mk("Models overview", !modelView||modelView==="overview", ()=>{ modelView="overview"; render(); });
+  const sd = sdRuns();
+  if(sd.length) mk(`Showdown (${sd.length})`, modelView==="showdown", ()=>{ modelView="showdown"; render(); }, "#4cc9f0");
   (DATA.model_runs||[]).forEach((m,i)=>mk(shortId(m.id), modelView==="run"&&i===modelIdx,
     ()=>{ modelIdx=i; modelView="run"; hiddenLegs.clear(); render(); }, vdot(m.verdict)));
 }
@@ -174,13 +198,30 @@ function renderModelRun(m){
   const c = vclass(m.verdict);
   const b = $("#modelBanner"); b.className = "banner "+c;
   const model = [m.model.slug||m.id, m.model.quant, m.model.family].filter(Boolean).join(" · ");
-  const meta = [m.date, m.hardware, `${m.n_rows} rows${m.n_warm?` (${m.n_warm} warm-up, table only)`:""}`,
-                `legs ${m.legs.join(" / ")||"—"}`].join(" · ");
+  const ag = !!m.agentic;
+  const meta = [m.date, m.hardware,
+                ag ? `${m.agentic.resolved}/${m.agentic.n_instances} resolved`
+                   : `${m.n_rows} rows${m.n_warm?` (${m.n_warm} warm-up, table only)`:""}`,
+                ag ? `${m.agentic.steps_cap??"—"}-step cap` : `legs ${m.legs.join(" / ")||"—"}`].join(" · ");
   b.innerHTML=`${pill(m.verdict)}
     <div><h2>${m.title}</h2>
       <div class="meta">${model} · ${m.engine||"engine unrecorded"}</div>
       <div class="meta">${meta}</div>
       ${m.notes?`<div class="meta">${m.notes}</div>`:""}</div>`;
+  SD_CHARTS.forEach(dropChart);
+  if(ag){
+    /* a showdown round has no tuning legs: its score is the outcome, its only row is telemetry
+       the agent work produced — so the leg charts would draw empty axes over a real result. */
+    ["#mDecode","#mPrefill"].forEach(id=>{ dropChart(id); $(id).closest(".card").hidden = true; });
+    $("#modelFilters").hidden = true;
+    $("#cellNote").hidden = true;
+    const card = $("#sdRunCard"); card.hidden = false; card.innerHTML = sdCard(m);
+    modelRows(m);
+    return;
+  }
+  ["#mDecode","#mPrefill"].forEach(id=>$(id).closest(".card").hidden = false);
+  $("#modelFilters").hidden = false;
+  const card = $("#sdRunCard"); card.hidden = true; card.innerHTML = "";
   renderLegChips(m);
   modelNote(m);
   cellChart(m, "#mDecode", "tps", "output tok/s", "output tok/s");
@@ -247,6 +288,7 @@ function renderModelOverview(){
   const models = DATA.models||[];
   // the round-view charts belong to an open round; don't leave them attached to hidden canvases
   dropChart("#mDecode"); dropChart("#mPrefill");
+  SD_CHARTS.forEach(dropChart);
   if(!models.length){
     dropChart("#mModelTps"); dropChart("#mModelPp");
     $("#modelVerdicts").innerHTML="<p class='dim'>No model runs published yet.</p>";
@@ -275,11 +317,76 @@ function modelVerdicts(models){
       const dv = v.tps-base;
       d=`<span class="${dv>0?"up":(dv<0?"down":"dim")}">${dv>0?"+":""}${dv.toFixed(1)}</span>`;
     }
-    html+=`<tr><td>${m.slug}</td><td>${shortId(v.id)}</td><td>${v.date}</td><td>${pill(v.verdict)}</td>`+
+    html+=`<tr><td>${m.slug}</td><td>${shortId(v.id)}${v.agentic?` <span class="pill info">showdown</span>`:""}</td><td>${v.date}</td><td>${pill(v.verdict)}</td>`+
       `<td>${fmt1(v.tps)}</td><td>${d}</td><td>${fmt1(v.pp)}</td>`+
       `<td class="dim">${v.n_rows} · ${v.legs.join("/")||"—"}</td></tr>`;
   }));
   $("#modelVerdicts").innerHTML=html+"</tbody></table>";
+}
+
+/* ---------- models lane: agentic showdown rounds ----------
+   One round = mini-swe-agent run once over the sb10 set on one served build, graded by the
+   official SWE-bench eval container (schemas/modelrun.schema.json → `agentic`). Score and
+   efficiency here; the tuning medians above never see these rounds (build.py is_agent).
+   Outcome hues are this section's own: green resolved / amber unresolved / grey empty. */
+const SDCELL = {resolved:["r","resolved"], unresolved:["u","unresolved — patch submitted, eval failed it"],
+                empty:["e","empty — step cap hit, no patch submitted"]};
+function renderShowdown(){
+  dropChart("#mDecode"); dropChart("#mPrefill");
+  const runs = sdRuns();
+  if(!runs.length){
+    SD_CHARTS.forEach(dropChart);
+    $("#sdCards").innerHTML = "<p class='dim'>No agentic showdown rounds published.</p>";
+    return;
+  }
+  const names = runs.map(m=>shortId(m.id));     // one PALETTE hue per round, like every bars() caller
+  const desc = (a,b) => (b.v-a.v) || a.label.localeCompare(b.label);
+  const rows = runs.map(m=>({label:shortId(m.id), name:shortId(m.id), v:m.agentic.resolved, raw:m}));
+  bars("#sdResolved", rows.slice().sort(desc), "resolved instances",
+    (v,n,x)=>{ const a=x.raw.agentic;
+      return `${v} of ${a.n_instances} resolved · ${x.raw.date}` +
+        (a.partial_credit!=null?` · partial credit ${fmt2(a.partial_credit)}`:"") +
+        (a.steps_cap?` · ${a.steps_cap}-step cap`:""); }, names);
+  const eff = runs.filter(m=>m.agentic.resolved_per_gpu_h!=null)
+                  .map(m=>({label:shortId(m.id), name:shortId(m.id), v:m.agentic.resolved_per_gpu_h, raw:m}))
+                  .sort(desc);
+  $("#sdEffCard").hidden = !eff.length;
+  bars("#sdEff", eff, "resolved / GPU-hour",
+    (v,n,x)=>`${v.toFixed(2)} resolved / GPU-h · ${x.raw.agentic.resolved} resolved in ${fmt2(x.raw.agentic.gpu_hours)} GPU-h`, names);
+  $("#sdCards").innerHTML = runs.map(sdCard).join("");
+}
+function sdCard(m){
+  const a = m.agentic, insts = a.per_instance||[];
+  const stat = (k,v)=>`<div class="vrow"><b>${k}</b><code>${v}</code></div>`;
+  return `<div class="sd-card" title="${m.id}">
+    <div class="sd-head">${pill(m.verdict)}<h3>${m.model.slug||m.id}</h3>
+      <span class="dim">${runLabel(m)}</span></div>
+    <div class="sd-meta">${m.date} · ${m.hardware} · ${a.steps_cap==null?"step cap unrecorded":`${a.steps_cap}-step cap`}
+      · T=${a.temperature==null?"?":a.temperature} · ${m.engine||"engine unrecorded"}</div>
+    <div class="sd-stats">
+      ${stat("resolved", `${a.resolved}/${a.n_instances}`)}
+      ${stat("partial credit", fmt2(a.partial_credit))}
+      ${stat("GPU-hours", fmt2(a.gpu_hours))}
+      ${stat("resolved / GPU-h", fmt2(a.resolved_per_gpu_h))}
+      ${stat("empty", a.empty)}
+    </div>
+    <div class="sd-grid">${insts.map(sdCell).join("")}</div>
+    ${sdFoot(m)}
+  </div>`;
+}
+function sdCell(p){
+  const [cls,txt] = SDCELL[p.result]||["e",p.result||"unrecorded"];   // `txt` not `lab`: keeps the label-truncating lab() visible below
+  const steps = p.steps==null ? "steps unrecorded" : `${p.steps} step${p.steps===1?"":"s"}`;
+  const tip = `${p.instance} · ${txt} · ${steps} · credit ${p.credit==null?"–":fmt2(p.credit)}` +
+    ` · ${p.patch==null?"patch unrecorded":(p.patch?"patch submitted":"no patch")}`;
+  return `<div class="icell ${cls}" title="${tip}"><b>${(p.instance||"").split("__").pop()||p.instance||"—"}</b><span>${steps}</span></div>`;
+}
+function sdFoot(m){
+  /* the round's single agent_phase row: token speed while the agent worked. Shown as what it
+     is — a different measurement condition from a tuning leg, so never charted next to one. */
+  const r = (m.rows||[]).find(x=>x.leg==="agent_phase");
+  if(!r) return "";
+  return `<div class="dim sd-foot">agent-phase telemetry: ${fmt1(r.pp)} encode · ${fmt1(r.tps)} decode tok/s — measured while the agent worked, not comparable to the tuning-leg charts</div>`;
 }
 
 /* ---------- overview: cross-run aggregation ---------- */
