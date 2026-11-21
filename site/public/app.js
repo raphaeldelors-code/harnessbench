@@ -1,6 +1,12 @@
 /* HarnessBench dashboard — data/site.json → sections: overview, runs, rig, calibration */
 const PALETTE = ["#4cc9f0","#b57bff","#3ddc84","#ffb020","#ff5d8f","#57d0ff","#9d7bff",
                  "#6fe3a0","#ffd166","#ff8fa3","#8fd3ff"];
+/* R/E/T/U outcome hues — one source of truth: instance-grid cells (drawGrid, translucent alphas)
+   and the failure-mix stacked bars (same rgb, alpha 1). Letters order = bottom→top stack order. */
+const OKEYS = ["R","E","T","U"];
+const OLAB = {R:"resolved", E:"empty patch", T:"timeout", U:"ungraded"};
+const ORGB = {R:"61,220,132", E:"255,93,93", T:"255,176,32", U:"130,160,255"};
+const OALPHA = {R:.85, E:.5, T:.65, U:.14};
 const fmt = n => n==null ? "–" : n.toLocaleString("en-US");
 let DATA, section = "overview", runIdx = 0, hidden = new Set(), charts = {};
 
@@ -128,6 +134,9 @@ function renderRun(){
   barSorted("#cTok", h=>h.input_tokens/1e6, "M input tokens", v=>v.toFixed(1)+"M input tokens");
   barSorted("#cWall", h=>h.wall_s/60, "minutes", v=>Math.round(v)+" min wall");
   barSorted("#cCache", h=>h.cache_tokens/1e6, "M cached tokens", v=>v.toFixed(1)+"M cached input tokens");
+  failMix();
+  barSorted("#cCalls", h=>h.resolved ? h.calls/h.resolved : null, null,   // null → Chart.js gap (never divide by 0)
+    (v,h)=>`${v.toFixed(1)} calls / resolved · ${fmt(run().harnesses[h].calls)} total`);
   const hasDist = visible().some(h=>(r.windows[h]||[]).length);
   $("#cDist").closest(".card").style.display = hasDist?"":"none";
   distChart(); drawMc(); drawGrid();
@@ -142,6 +151,7 @@ function renderVersions(){
   html+=row("hardware", v.gpu||"?");
   html+=row("dataset", v.dataset||"?");
   html+=row("runner", `workers ${v.runner_workers||"?"} · timeout ${v.per_instance_timeout_s||"?"} s`);
+  html+=row("comparability", `seed ${run().seed??"?"} · workers ${run().workers??"?"} · rig ${run().rig_id||v.rig||"bench-rig-01"}`);
   html+=row("harness versions", Object.entries(hv).map(([k,x])=>`${k} = ${x}`).join("<br>")||"?");
   $("#versions").innerHTML=html;
 }
@@ -193,8 +203,29 @@ function barSorted(id, valFn, yTitle, fmtTip){
     datasets:[{data:rows.map(x=>x.v),backgroundColor:rows.map(x=>color(x.h)),
       borderRadius:8,maxBarThickness:46}]},
     options:{...baseOpts, plugins:{...baseOpts.plugins,
-      tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y)}}},
+      tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y, rows[c.dataIndex].h)}}},
       scales:scaled(narrow,yTitle)}});
+}
+
+/* failure mix: one stacked bar per harness, R/E/T/U counted out of per_instance (same hues as the grid) */
+function failMix(){
+  const r=run(), narrow=narrowBox("#cFail");
+  const rows=visible().map(h=>{ const m={R:0,E:0,T:0,U:0};
+    Object.values(r.harnesses[h].per_instance||{}).forEach(v=>{ if(m[v]!=null) m[v]++; });
+    return {h, m}; }).sort((a,b)=>b.m.R-a.m.R);          // resolved desc — same ordering as every other bar
+  if(!rows.length) return;
+  const top=rows.map(x=>{ let t=-1; OKEYS.forEach((k,i)=>{ if(x.m[k]) t=i; }); return t; });
+  const s=scaled(narrow);
+  mkChart("#cFail",{type:"bar",data:{labels:rows.map(x=>lab(x.h,narrow)),
+    datasets:OKEYS.map((k,i)=>({label:OLAB[k], data:rows.map(x=>x.m[k]),
+      // borderRadius 8 only on the top-most visible segment of each stack (indexable per-bar array):
+      // rounding every segment — or an interior joint — reads as a gap, and Chart.js stacked bars have
+      // no "cap the stack" option, so the radius is keyed to the last non-empty dataset per bar.
+      backgroundColor:`rgba(${ORGB[k]},1)`,
+      borderRadius:rows.map((_,j)=>top[j]===i ? 8 : 0), maxBarThickness:46}))},
+    options:{...baseOpts, plugins:{...baseOpts.plugins,
+      tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>`${c.parsed.y} ${c.dataset.label}`}}},
+      scales:{x:{...s.x,stacked:true}, y:{...s.y,stacked:true}}}});
 }
 
 /* ---------- heatmaps on canvas (min cell width + horizontal scroll) ---------- */
@@ -236,8 +267,7 @@ function drawGrid(){
     g.fillText(truncText(g,ins,L-12), L-8, T+i*rh+rh/2);
     hs.forEach((h,j)=>{
       const cell=(r.harnesses[h].per_instance||{})[ins]||"?";
-      g.fillStyle = cell==="R" ? "rgba(61,220,132,.85)" : cell==="E" ? "rgba(255,93,93,.5)"
-        : cell==="T" ? "rgba(255,176,32,.65)" : "rgba(130,160,255,.14)";
+      g.fillStyle=`rgba(${ORGB[cell]||ORGB.U},${OALPHA[cell]||.14})`;
       g.fillRect(L+j*cw+1.5, T+i*rh, cw-3, rh-2);
     });
   });

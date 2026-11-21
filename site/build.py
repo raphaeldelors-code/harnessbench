@@ -95,6 +95,8 @@ def build():
                 "hardware": manifest.get("hardware", "bench-rig-01"),
                 "rig_id": manifest.get("hardware", "bench-rig-01"),
                 "dataset": manifest.get("dataset", {}),
+                "seed": manifest.get("seed"),
+                "workers": manifest.get("workers"),
                 "n_instances": len(results["instances"]),
                 "instances": results["instances"],
                 "harnesses": harnesses,

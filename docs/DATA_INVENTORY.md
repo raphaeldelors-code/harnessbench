@@ -1,7 +1,9 @@
 # Data inventory & gap analysis
 
-Generated 2026-11-20 from the actual files in `runs/*/` (3 runs). "On site" = currently
-rendered in a chart, table or panel at https://raphaeldelors-code.github.io/harnessbench/.
+Generated 2026-11-20 from the actual files in `runs/*/` (3 runs); usage matrix refreshed
+2026-11-21 (failure-mix + calls-per-resolved charts, comparability line, Decode speed removed).
+"On site" = currently rendered in a chart, table or panel at
+https://raphaeldelors-code.github.io/harnessbench/.
 
 ## Files captured per run (`runs/<id>/data/`)
 
@@ -24,7 +26,7 @@ rendered in a chart, table or panel at https://raphaeldelors-code.github.io/harn
 | wall_s (per instance) | windows t1−t0 | ✅ | per-instance wall chart (p10/median/p90) |
 | input_tokens | results.json | ✅ | Effort chart, cross-run tokens |
 | cache_tokens | results.json | ✅ | Cache use chart |
-| output_tokens | results.json | ✅ (new) | Decode speed chart (output/wall) |
+| output_tokens | results.json | ❌ | — (Decode speed chart removed from the site, so output_tokens is no longer rendered) |
 | resolved_per_gpu_h | results.json | ✅ | Throughput chart, cross-run throughput |
 | mcnemar pairs | results.json (recomputed at build) | ✅ | pairwise significance matrix |
 | model, model_args | versions.json | ✅ | run versions panel, hero |
@@ -32,9 +34,9 @@ rendered in a chart, table or panel at https://raphaeldelors-code.github.io/harn
 | gpu / engine / strata / llama-swap / dataset / workers / timeout | versions.json | ✅ | run versions panel, rig tab |
 | **hardware / rig id** | run.json + data/hardware.json | ✅ (new) | hero line, rig tab, schema cross-check in `validate_data.py` |
 | t0, t1 raw timestamps | windows jsonl | ⚠️ derived only | used to derive wall; raw timeline unused |
-| **empty** (empty-patch count) | results.json | ❌ | — |
-| **calls** (LLM requests per harness) | results.json | ❌ | — |
-| seed, workers | run.json | ❌ | — |
+| **empty** (empty-patch count) | results.json | ✅ | failure-mix stacked bar (E segment — counted from `per_instance` R/E/T/U, not from the roll-up field) |
+| **calls** (LLM requests per harness) | results.json | ✅ | calls-per-resolved bar (tooltip also shows the total calls) |
+| seed, workers | run.json | ✅ | run versions panel — comparability line (seed · workers · rig id) |
 | resolved_ids | results.json | ❌ (redundant with per_instance) | — |
 | model_patch (full diff text) | preds json.gz | ❌ (kept for re-evaluation) | — |
 | eval_<h>.json detail | 2026-11-17 run only | ❌ | — |
@@ -42,11 +44,13 @@ rendered in a chart, table or panel at https://raphaeldelors-code.github.io/harn
 ## Gap analysis — unused fields worth leveraging
 
 1. **`calls` → API efficiency.** `calls / resolved` gives "LLM requests per solved instance"
-   (codex ≈ 63 vs hermes-agent ≈ 145 on run 3 — a real cost-per-win signal). Candidate chart:
-   calls-per-resolved bar, or scatter resolved% vs calls.
+   (codex ≈ 63 vs hermes-agent ≈ 145 on run 3 — a real cost-per-win signal). Implemented
+   2026-11-21 as the calls-per-resolved bar (`#cCalls`, runs tab); the resolved% vs calls scatter
+   is still open.
 2. **`empty` → failure taxonomy.** resolved / empty-patch / timeout / ungraded split is already
    in `per_instance` (R/E/T/U) but only shown as grid cells. A stacked failure-mix bar per
-   harness would answer "why did it lose?" not just "did it lose?".
+   harness would answer "why did it lose?" not just "did it lose?". Implemented 2026-11-21 as
+   the failure-mix stacked bar (`#cFail`, runs tab).
 3. **`t0/t1` → concurrency & scheduling views.** Raw epochs allow a Gantt/timeline of one run
    (instances overlapping at `workers=2`) and a throughput-over-time curve. Useful to show the
    queue isn't the bottleneck; also exposes pathological stalls (e.g. the 61-min mini window).
@@ -55,9 +59,11 @@ rendered in a chart, table or panel at https://raphaeldelors-code.github.io/harn
    reproducibility contract: any third party can re-grade them with the official SWE-bench
    harness without re-running the agents.
 5. **`seed` / `workers` → comparability badge.** Same rig + same seed + same workers =
-   apples-to-apples; display in the run versions panel.
-6. **`output_tokens` (raw)** now feeds Decode speed; an input/output ratio would expose
-   context-verbosity differences between harnesses.
+   apples-to-apples; display in the run versions panel. Implemented 2026-11-21: `build.py`
+   passes both through to `site.json`, and the run versions panel shows a `comparability`
+   line (seed · workers · rig id).
+6. **`output_tokens` (raw)** is unused on the site again — the Decode speed chart was removed;
+   an input/output ratio would expose context-verbosity differences between harnesses.
 
 Fields **not captured today** that would need new probes if wanted: per-request TTFT and
 GPU-side stats (VRAM used, queue depth, decode tok/s at server level — llama-swap exposes

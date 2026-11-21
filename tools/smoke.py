@@ -18,7 +18,18 @@ URL = None  # set at boot (http://127.0.0.1:<port>/index.html)
 
 CANVASES = {
     "overview": ["#oResolved", "#oTok", "#oThr", "#oWall"],
-    "runs": ["#cResolved", "#cThr", "#cTok", "#cWall", "#cCache", "#cDist", "#cGrid", "#cMc"],
+    "runs": [
+        "#cResolved",
+        "#cThr",
+        "#cTok",
+        "#cWall",
+        "#cCache",
+        "#cFail",
+        "#cCalls",
+        "#cDist",
+        "#cGrid",
+        "#cMc",
+    ],
 }
 
 
@@ -107,7 +118,9 @@ def main() -> int:
         for e in all_errors:
             print(" -", e)
         return 1
-    print("SMOKE OK (desktop 1280px + phone 390px, 11 canvases, 0 console errors)")
+    print(
+        f"SMOKE OK (desktop 1280px + phone 390px, {sum(len(v) for v in CANVASES.values())} canvases, 0 console errors)"
+    )
     return 0
 
 
