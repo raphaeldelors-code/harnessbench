@@ -6,3 +6,7 @@ out/
 smoke/
 /seed/
 .cc_run.log
+# read-only agentic showdown drop (RESULTS*.md, run logs, report JSONs). Run manifests cite it by
+# bench-rig-01 + relative artifact name, never by a local checkout path; the raw drop also carries
+# the rig's own home-directory paths in Markdown, which the no-personal-paths hook does not type-check
+artifacts/
