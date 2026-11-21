@@ -31,21 +31,33 @@ The runner never assumes where the model endpoint lives:
 
 | Option | How |
 |---|---|
-| **A — containerised llama-swap** | `docker compose -f docker/docker-compose.yml up -d llamaswap` (pinned llama-swap on a CUDA llama.cpp base; put a GGUF in `HB_MODEL_DIR`) |
+| **A — containerised llama-swap** | `docker compose --env-file .env -f docker/docker-compose.yml up -d llamaswap` (pinned llama-swap on a CUDA llama.cpp base; put a GGUF in `HB_MODEL_DIR`) |
 | **B — existing endpoint** | `export HB_BACKEND_URL=http://host:8080 HB_MODEL=your-model` — no container needed |
 
 `HB_CONTAINER_BACKEND_URL` is the URL the *eval containers* use to reach the
 backend (usually `http://host.docker.internal:8080`). Copy `.env.example` → `.env`.
 
+Because `-f docker/docker-compose.yml` makes `docker/` the Compose project dir,
+Compose reads `docker/.env` (not the repo-root `.env`) and resolves relative
+paths there — hence the explicit `--env-file .env`, and absolute `HB_MODEL_DIR`
+/ `HB_RUNTIME_DIR` values. `HB_RUNTIME_DIR` (the portable runtime built by
+`scripts/setup_hb.sh`) is required by the `bench` service and must be an
+absolute host path: it is forwarded verbatim to the Docker daemon that launches
+the eval containers.
+
 ### Run a bench
 
 ```bash
-hb prep                       # dataset + portable harness runtime (scripts/setup_hb.sh)
-hb smoke --harness opencode   # one instance end-to-end
-hb run --harness opencode     # full cohort (workers configurable)
-hb eval                       # official SWE-bench grading in eval containers
-hb report                     # markdown leaderboard from runs/
+hb prep                       # clone instance repos, fetch base commits
+hb smoke --harness opencode   # toy-repo fix test inside an eval container
+hb run --harness opencode     # full cohort (--workers N, default 2)
+hb eval --harness opencode    # official SWE-bench grading (per harness)
+hb report                     # markdown table from out/, eval reports and windows
 ```
+
+`--harness` names a key in the `HARNESSES` registry (`bench/harnesses.py`) and is
+required by `smoke`, `run` and `eval`. The legacy mini-swe-agent lane is its own
+command, `hb run-mini` (it has no `--harness`).
 
 All backend/model/home paths flow through `bench/config.py` env vars — no
 machine-specific paths anywhere in the repo (enforced by a pre-commit hook).
@@ -120,19 +132,23 @@ list of what neither lane claims — is [docs/METHODOLOGY.md](docs/METHODOLOGY.m
 
 ## Harness invocation parity
 
-| harness | version | headless invocation |
-|---|---|---|
-| claude-code | 2.1.326 | `claude --print --output-format=stream-json --permission-mode=bypassPermissions` (ANTHROPIC_BASE_URL→llama-swap `/v1/messages`) |
-| opencode | 2.3.0 | `opencode run --model llamaswap/<model> --format json --auto -- "$TASK"` |
-| pi | 1.5.2 | `pi --print --mode json --provider rig --model rig/<model> --thinking off -- "$TASK"` |
-| deepseek-harness | 0.2.2-rc.3 | `dsh headless --json --permission-mode danger-full-access -- "$TASK"` |
-| mini-swe-agent | 2.4.6 | swebench mode, 40 steps, 8192 max_tokens, T=0 |
-| codex | 0.170.0 | `codex exec --json "$TASK"` (OPENAI_BASE_URL→llama-swap) |
-| qwen-code | 0.28.0 | `qwen --output-format json -p "$TASK"` (OPENAI base→llama-swap) |
-| kimi-code | 2.6.3 | `kimi -p "$TASK"` (model pin→llama-swap) |
-| grok-build | 1.0.89 | `grok -p "$TASK" --output-format json` (base→llama-swap) |
-| openclaw | 2026.6.35 | `openclaw run "$TASK" --json` (apiKey model→llama-swap) |
-| hermes-agent | 0.23.1 | hermes one-shot in its own Docker image (base→llama-swap) |
+Copied from the `HARNESSES` registry in `bench/harnesses.py` — argv verbatim, plus
+where each harness's endpoint comes from. Published runs cover a subset of these;
+the dashboard's cohort map says who was measured on which run.
+
+| harness | version | headless invocation | endpoint from |
+|---|---|---|---|
+| claude-code | 2.1.326 | `printf %s "$HB_TASK" \| claude --verbose --output-format=stream-json --permission-mode=bypassPermissions --print` | `ANTHROPIC_BASE_URL` env |
+| pi | 1.5.2 | `pi --print --mode json --provider rig --model rig/$HB_MODEL --thinking off -- "$HB_TASK"` | seeded `homes/pi` provider config |
+| deepseek-harness | 0.2.2-rc.3 | `dsh headless --json --permission-mode danger-full-access -- "$HB_TASK"` | `OPENAI_BASE_URL` env (`…/v1`) |
+| opencode | 2.3.0 | `opencode run --model llamaswap/$HB_MODEL --format json --auto -- "$HB_TASK"` | seeded `homes/opencode` provider config |
+| codex | 0.170.0 | `printf %s "$HB_TASK" \| codex exec --json --dangerously-bypass-approvals-and-sandbox` | own config under `homes/codex` (not seeded by `scripts/setup_hb_configs.sh`) |
+| qwen-code | 0.28.0 | `qwen -y -p "$HB_TASK"` | `OPENAI_BASE_URL` (`…/v1`) + `OPENAI_MODEL` env |
+| kimi-code | 2.6.3 | `kimi -p "$HB_TASK" --output-format stream-json` | own config under `homes/kimi-code` (not seeded by `scripts/setup_hb_configs.sh`) |
+| grok | 1.0.89 | `grok -p "$HB_TASK" --always-approve --output-format json --disable-web-search` | own config under `homes/grok` (not seeded by `scripts/setup_hb_configs.sh`) |
+| openclaw | 2026.6.35 | `openclaw agent --local --json --timeout 2100 --session-id "hb-$(date +%s%N)" -m "$HB_TASK"` | own config under `homes/openclaw` (not seeded by `scripts/setup_hb_configs.sh`) |
+| hermes-agent | 0.23.1 | `/opt/hermes/bin/hermes -z "$HB_TASK" --yolo` in its own image (`nousresearch/hermes-agent:latest`) | `HERMES_*` env + its image config |
+| mini-swe-agent | unpinned | legacy **host** lane (`hb run-mini`) driving `minisweagent.run.benchmarks.swebench` with its own `swebench.yaml` / `bench_local.yaml` in `$HB_MINI_DIR`; not an `HARNESSES` key, so not selectable with `--harness` | its own config files |
 
 ## Pitfalls learned while building
 

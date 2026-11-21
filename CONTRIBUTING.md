@@ -6,8 +6,14 @@ Thanks for making the harness arena bigger 🙌
 
 1. **Registry entry in `bench/harnesses.py`** — binary path under the portable
    runtime (`/opt/hb`), the headless argv template, and env vars that point its
-   API base at `$HB_BACKEND_URL`. Copy an existing entry (e.g. `codex`) — the
-   OpenAI-compatible ones are the easiest template. Pin the version explicitly.
+   API base at `$HB_CONTAINER_BACKEND_URL` — the URL reachable from *inside* the
+   eval container, not `HB_BACKEND_URL` (the runner's own view). OpenAI-compatible
+   harnesses take `OPENAI_BASE_URL = $HB_CONTAINER_BACKEND_URL/v1` (see
+   `_V1` in `bench/harnesses.py`), Anthropic-style ones take `ANTHROPIC_BASE_URL`
+   without the suffix. Harnesses that have no base-URL env var instead read a
+   config file from their per-harness home (`RUNTIME_DIR/homes/<name>`), which
+   `scripts/setup_hb_configs.sh` seeds — copy an existing entry (e.g.
+   `deepseek-harness`, the simplest env-driven one) and pin the version explicitly.
 2. **Install it into the portable runtime** — extend `scripts/setup_hb.sh`
    (npm/binary install into `$HB_RUNTIME_DIR`) and seed a home directory under
    `homes/<name>` in `scripts/setup_hb_configs.sh`.

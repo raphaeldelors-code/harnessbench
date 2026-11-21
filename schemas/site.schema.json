@@ -52,6 +52,7 @@
           "engine": {"type": "string", "minLength": 1},
           "verdict": {"enum": ["INFO", "KEEP", "CONFIRM-KEEP", "REVERT", "UNDO"]},
           "hardware": {"type": "string", "pattern": "^bench-rig-[0-9]+$"},
+          "notes": {"type": "string"},
           "n_rows": {"type": "integer", "minimum": 1},
           "n_warm": {"type": "integer", "minimum": 0},
           "legs": {"type": "array", "items": {"type": "string", "minLength": 1}},
@@ -126,7 +127,11 @@
                 "verdict": {"enum": ["INFO", "KEEP", "CONFIRM-KEEP", "REVERT", "UNDO"]},
                 "tps": {"type": ["number", "null"]},
                 "pp": {"type": ["number", "null"]},
-                "n_rows": {"type": "integer", "minimum": 1},
+                "n_rows": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "non-warm rows in this round; 0 is a capture that holds only warm-up rows, which is why its tps/pp are null"
+                },
                 "legs": {"type": "array", "items": {"type": "string"}}
               }
             }

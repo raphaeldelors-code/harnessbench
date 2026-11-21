@@ -9,17 +9,26 @@
 # Either way the bench container receives HB_CONTAINER_BACKEND_URL, which must
 # be reachable *from inside* the bench container (host.docker.internal, not
 # 127.0.0.1, when the backend runs on the host).
+#
+# Two Compose gotchas this file depends on:
+#   * `-f docker/docker-compose.yml` makes `docker/` the project dir — build
+#     contexts, relative volume paths and the implicit env file all resolve
+#     there. The repo-root `.env` therefore has to be passed explicitly:
+#     `docker compose --env-file .env -f docker/docker-compose.yml …`
+#   * `~` is not expanded by Compose, so the host paths below are required
+#     (absolute) rather than defaulted to a home-relative guess.
 
 services:
   llamaswap:
     build:
       context: .
-      dockerfile: docker/Dockerfile.llamaswap
+      dockerfile: Dockerfile.llamaswap
       args:
         BASE_IMAGE: ghcr.io/ggml-org/llama.cpp:server-cuda
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
+      # relative paths resolve against the project dir (docker/) — prefer an absolute HB_MODEL_DIR
       - ${HB_MODEL_DIR:-./models}:/models:ro
     deploy:
       resources:
@@ -44,14 +53,16 @@ services:
         condition: service_healthy
     volumes:
       - ..:/app
-      - ${HB_RUNTIME_DIR:-~/.harnessbench/runtime}:/opt/hb:ro
+      - ${HB_RUNTIME_DIR:?set HB_RUNTIME_DIR to the absolute host path of the portable runtime built by scripts/setup_hb.sh}:/opt/hb:ro
       - /var/run/docker.sock:/var/run/docker.sock
     working_dir: /app
     environment:
       HB_BACKEND_URL: http://llamaswap:8080
       HB_CONTAINER_BACKEND_URL: http://host.docker.internal:8080
       HB_MODEL: ${HB_MODEL:-strata_iq3s}
-      HB_HOME: /opt/hb
+      # must be writable: bench/config.py puts out/, work/ and repos/ under HB_HOME
+      # (the portable runtime is the read-only /opt/hb mount, read from HB_RUNTIME_DIR)
+      HB_HOME: /app
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: ["bash", "-c", "pip install -e . && hb report"]

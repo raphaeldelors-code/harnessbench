@@ -59,7 +59,10 @@ function showSection(route){
     name = "runs";
   } else if(name.startsWith("models/")){
     const i = (DATA.model_runs||[]).findIndex(m=>m.id===name.slice(7));
-    if(i>=0){ modelIdx = i; modelView = "run"; }
+    if(i>=0){ modelIdx = i; modelView = "run"; hiddenLegs.clear(); }
+    /* leg filters are one round's view state: the leg names repeat across rounds (a/b/c…),
+       so a filter carried over by a hash change would hide a leg the reader never hid.
+       (The round tabs already clear it — this covers the deep-link/back-button path.) */
     name = "models";
   }
   if(!document.getElementById("sec-"+name)) name = "overview";   // unknown hash → safe default
@@ -242,17 +245,22 @@ function modelRows(m){
 }
 function renderModelOverview(){
   const models = DATA.models||[];
+  // the round-view charts belong to an open round; don't leave them attached to hidden canvases
+  dropChart("#mDecode"); dropChart("#mPrefill");
   if(!models.length){
     dropChart("#mModelTps"); dropChart("#mModelPp");
     $("#modelVerdicts").innerHTML="<p class='dim'>No model runs published yet.</p>";
     return;
   }
-  const names = models.map(m=>m.slug);
-  // build.py already returns models sorted by median decode; keep the non-null subset charted
-  bars("#mModelTps", models.filter(m=>m.tps!=null).map(m=>({label:m.slug,name:m.slug,v:m.tps,raw:m})),
+  const names = models.map(m=>m.slug);   // colors keyed on slug, so the sort below can't repaint
+  // house style: every bar chart sorts by its own descending value — build.py's models[] is
+  // sorted by decode, which is a different order for the prefill chart, so sort per metric here
+  const rowsFor = key => models.filter(m=>m[key]!=null)
+    .map(m=>({label:m.slug,name:m.slug,v:m[key],raw:m})).sort((a,b)=>b.v-a.v);
+  bars("#mModelTps", rowsFor("tps"),
     "output tok/s", (v,n,x)=>`${v.toFixed(1)} median output tok/s · ${x.raw.n_runs} round${x.raw.n_runs>1?"s":""}`+
       (x.raw.tps_range?` · spread ${fmt1(x.raw.tps_range[0])}–${fmt1(x.raw.tps_range[1])}`:""), names);
-  bars("#mModelPp", models.filter(m=>m.pp!=null).map(m=>({label:m.slug,name:m.slug,v:m.pp,raw:m})),
+  bars("#mModelPp", rowsFor("pp"),
     "input tok/s", (v,n,x)=>`${v.toFixed(1)} median input tok/s · ${x.raw.n_runs} round${x.raw.n_runs>1?"s":""}`, names);
   modelVerdicts(models);
 }

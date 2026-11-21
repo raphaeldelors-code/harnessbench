@@ -135,6 +135,10 @@ def model_run(run_dir: Path, manifest: dict) -> dict | None:
     if not data:
         return None
     rows = data.get("rows", [])
+    if not rows:
+        # schemas/model_results.schema.json requires at least one row, and site.schema.json refuses
+        # an empty rows[] — skip the round rather than emit a site.json that validate rejects.
+        return None
     legs: list[str] = []
     for row in rows:
         leg = row.get("leg") or ""

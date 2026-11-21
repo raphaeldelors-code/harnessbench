@@ -40,6 +40,39 @@ CANVASES = {
 }
 
 
+OVERFLOW_JS = """(() => {
+    const vw = window.innerWidth;
+    const inScroller = el => {
+        for (let n = el; n; n = n.parentElement) {
+            const ox = getComputedStyle(n).overflowX;
+            if (ox === 'auto' || ox === 'scroll') return true;
+        }
+        return false;
+    };
+    const canv = [...document.querySelectorAll('canvas')]
+        .filter(c => !inScroller(c) && c.getBoundingClientRect().width > vw + 1)
+        .map(c => c.id);
+    const sw = document.documentElement.scrollWidth;
+    return {canv, pageOverflow: sw > vw + 1, scrollWidth: sw, vw};
+})()"""
+
+
+def overflow_errors(page, label: str, where: str) -> list[str]:
+    """Gate the mobile rule where the reader actually is: a section can only overflow
+    once its own panels are visible, and heat maps / wide tables are allowed to scroll
+    inside their own box, so only an un-scrolled canvas or page overflow is a failure."""
+    wide = page.evaluate(OVERFLOW_JS)
+    errors = []
+    if wide["canv"]:
+        errors.append(f"{label}/{where}: canvases wider than viewport: {wide['canv']}")
+    if wide["pageOverflow"]:
+        errors.append(
+            f"{label}/{where}: page scrolls horizontally "
+            f"(scrollWidth {wide['scrollWidth']} > viewport {wide['vw']})"
+        )
+    return errors
+
+
 def drawn(canvas) -> bool:
     return canvas.evaluate(
         """c => { const g = c.getContext('2d');
@@ -59,20 +92,6 @@ def check_page(page, label: str) -> list[str]:
     page.wait_for_timeout(800)
     if "cohortTable" not in page.content():
         errors.append(f"{label}: page did not hydrate")
-    wide = page.evaluate(
-        """(() => {
-            const vw = window.innerWidth;
-            const canv = [...document.querySelectorAll('canvas')]
-                .filter(c => c.getBoundingClientRect().width > vw + 1)
-                .map(c => c.id);
-            const pageOverflow = document.documentElement.scrollWidth > vw + 1;
-            return {canv, pageOverflow};
-        })()"""
-    )
-    if wide["canv"]:
-        errors.append(f"{label}: canvases wider than viewport: {wide['canv']}")
-    if wide["pageOverflow"]:
-        errors.append(f"{label}: page scrolls horizontally ({wide})")
     for section, ids in CANVASES.items():
         page.evaluate(f"location.hash = '{section}'; showSection('{section}')")
         page.wait_for_timeout(900)
@@ -83,26 +102,38 @@ def check_page(page, label: str) -> list[str]:
                 continue
             if el.is_visible() and not drawn(el):
                 errors.append(f"{label}/{section}: {sel} has no pixels (empty chart)")
+        errors += overflow_errors(page, label, section)
         if section == "runs":
             math = page.evaluate("({b: binom(5, 2), p: mcNemarP(2, 5), p2: mcNemarP(21, 1)})")
             if math["b"] != 10 or abs(math["p"] - 0.453125) > 1e-9 or math["p2"] > 1e-4:
                 errors.append(f"{label}: McNemar math wrong: {math}")
         if section == "models":
-            # the overview is only the lane's index — open a round the way a tab click does,
-            # so the per-round charts and tables are gated too
+            # the lane overview is only an index — open every round the way a tab click does, so
+            # each round's own charts, banner, table, disclaimer and overflow are gated (the
+            # CANVASES check above skips #mDecode/#mPrefill: they are hidden until a round opens)
             rounds = page.evaluate("[...(DATA.model_runs || []).map(m => m.id)]")
             if not rounds:
                 errors.append(f"{label}/models: DATA.model_runs is empty")
                 continue
-            page.evaluate(f"showSection('models/{rounds[0]}')")
-            page.wait_for_timeout(900)
-            for sel in ("#mDecode", "#mPrefill"):
-                el = page.query_selector(sel)
-                if el is None or (el.is_visible() and not drawn(el)):
-                    errors.append(f"{label}/models/{rounds[0]}: {sel} missing or not drawn")
-            for sel in ("#modelBanner", "#modelRows"):
-                if not page.query_selector(sel).inner_text().strip():
-                    errors.append(f"{label}/models/{rounds[0]}: {sel} empty")
+            for rid in rounds:
+                page.evaluate(f"showSection('models/{rid}')")
+                page.wait_for_timeout(700)
+                for sel in ("#mDecode", "#mPrefill"):
+                    el = page.query_selector(sel)
+                    if el is None or (el.is_visible() and not drawn(el)):
+                        errors.append(f"{label}/models/{rid}: {sel} missing or not drawn")
+                for sel in ("#modelBanner", "#modelRows"):
+                    if not page.query_selector(sel).inner_text().strip():
+                        errors.append(f"{label}/models/{rid}: {sel} empty")
+                comparable = page.evaluate(
+                    """id => { const m = (DATA.model_runs || []).find(x => x.id === id);
+                        return !!m && m.cells.some(c =>
+                            m.legs.filter(l => c.legs[l] && c.legs[l].tps != null).length > 1); }""",
+                    rid,
+                )
+                if not comparable and not page.query_selector("#cellNote").inner_text().strip():
+                    errors.append(f"{label}/models/{rid}: one leg per cell, but no #cellNote disclaimer")
+                errors += overflow_errors(page, label, f"models/{rid}")
             page.evaluate("showSection('models')")
             page.wait_for_timeout(300)
     for sel, sec in (("#rigBody", "rig"), ("#tuneBody", "calibration")):

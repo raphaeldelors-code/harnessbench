@@ -28,11 +28,13 @@ main{max-width:1180px;margin:0 auto;padding:10px 20px 40px}
 .hero{padding:18px 4px 6px}
 .hero .big{font-size:16px;color:var(--dim)}
 .hero .big b{color:var(--tx)}
-.hero .champ{display:inline-flex;align-items:center;gap:10px;margin-top:10px;
+.hero .champ{display:inline-flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;
   padding:10px 16px;border-radius:14px;background:linear-gradient(90deg,rgba(76,201,240,.14),rgba(181,123,255,.14));
   border:1px solid var(--line);font-size:15px}
 .hero .champ .medal{font-size:20px}
-.run-tabs{margin:8px 0 2px}
+/* one tab per run/round: the count grows with every merged round, and buttons have no
+   break opportunity between them, so this row must wrap instead of overflowing the page */
+.run-tabs{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0 2px}
 /* model bench lane: verdict banner + verdict pills (green keep / red revert / grey info) */
 .banner{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-top:10px;padding:14px 18px;
   border:1px solid var(--line);border-left-width:4px;border-radius:16px;background:var(--card)}

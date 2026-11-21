@@ -21,10 +21,11 @@ export NPM_CONFIG_PREFIX=$HB_NPM
 mkdir -p $HB_NPM
 export PATH="$HB_NPM/bin:$PATH"
 npm config set prefix $HB_NPM
-# keep versions in sync with the pinned registry in bench/harnesses.py
-npm i -g --ignore-scripts @anthropic-ai/claude-code
-npm i -g --ignore-scripts @earendil-works/pi-coding-agent
-npm i -g @deepseek-ai/dsh
+# keep these versions in sync with the pinned registry in bench/harnesses.py
+# claude-code ships a native binary through its install script -> no --ignore-scripts here
+npm i -g @anthropic-ai/claude-code@2.1.326
+npm i -g --ignore-scripts @earendil-works/pi-coding-agent@1.5.2
+npm i -g @deepseek-ai/dsh@0.2.2-rc.3
 # other registry harnesses (opencode, codex, qwen-code, kimi-code, grok,
 # openclaw) install the same way, pinned to their registry versions
 echo HB_SETUP_DONE
