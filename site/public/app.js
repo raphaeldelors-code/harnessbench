@@ -157,6 +157,8 @@ function renderRig(){
   html+=row("memory", `${h.memory?.size_gib||"?"} GiB<br>${h.memory?.channels||""}${h.memory?.speed_mt_s?` @ ${h.memory.speed_mt_s} MT/s`:""}`);
   html+=row("gpu", `${h.gpu?.model||"?"}<br>${h.gpu?.vram_gib||"?"} GiB VRAM<br>PCIe ${h.gpu?.pcie_generation||"?"} · ${h.gpu?.pcie_lanes||"?"}`);
   html+=row("board", h.board||"?");
+  const st=h.storage||{};
+  if(st.boot_data) html+=row("storage", `${st.boot_data.model}<br>${st.boot_data.capacity_gib} GiB · ${st.boot_data.link}<br>${st.boot_data.role}${st.secondary?`<br><span class="dim">+ ${st.secondary.model} (${st.secondary.capacity_gib} GiB, ${st.secondary.role})</span>`:""}`);
   html+=row("software", `${h.os||"?"}<br>${h.served_by||""}`);
   html+=row("updated", h.updated_utc||"?");
   const users=DATA.runs.filter(r=>(r.rig_id||"bench-rig-01")===(h.id||"bench-rig-01")).map(r=>r.id);

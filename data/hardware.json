@@ -17,7 +17,20 @@
     "pcie_lanes": "x16 (link capability and negotiated state)"
   },
   "board": "ASRock B550 Phantom Gaming-ITX/ax",
-  "storage_note": "models and SWE-bench eval images on local NVMe",
+  "storage": {
+    "boot_data": {
+      "model": "Samsung SSD 990 EVO Plus 2TB (PM9C1a, DRAM-less)",
+      "capacity_gib": 1863,
+      "link": "NVMe PCIe Gen3 x4 (8 GT/s, downgraded — drive is Gen4-capable, 5600G ceiling)",
+      "role": "OS, served models, SWE-bench eval images, harness workspaces"
+    },
+    "secondary": {
+      "model": "Samsung SSD 970 EVO Plus 1TB",
+      "capacity_gib": 932,
+      "link": "NVMe PCIe Gen3 x4 (8 GT/s)",
+      "role": "internal, not mounted during runs"
+    }
+  },
   "os": "Ubuntu 26.04 LTS, kernel 7.0, Docker Engine",
   "served_by": "llama-swap (single-model, exclusive)",
   "updated_utc": "2026-11-20"
