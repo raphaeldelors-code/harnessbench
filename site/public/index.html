@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HarnessBench — coding-agent arena on one local model</title>
-<meta name="description" content="Reproducible SWE-bench arena: 11 coding harnesses × 1 fixed local model (Strata Qwen3.8-Flash-Next IQ3_S) on a single RTX 3090.">
+<title>HarnessBench — coding-agent arena and model bench on one local rig</title>
+<meta name="description" content="Reproducible SWE-bench arena (coding harnesses on one fixed local model) plus a model bench lane of engine/quantization tuning rounds — all on a single RTX 3090.">
 <link rel="stylesheet" href="style.css">
 <script src="vendor/chart.umd.min.js"></script>
 </head>
@@ -13,6 +13,10 @@
   <div class="brand"><span class="logo">⚡</span><h1>Harness<span>Bench</span></h1>
     <p class="tag">one model · many harnesses · fully local</p>
   </div>
+  <nav id="laneNav" class="tabs">
+    <a class="tab" data-lane="harness" href="#overview">Harness</a>
+    <a class="tab" data-lane="models" href="#models">Models</a>
+  </nav>
   <nav id="secNav" class="tabs">
     <a class="tab" data-sec="overview" href="#overview">Overview</a>
     <a class="tab" data-sec="runs" href="#runs">Runs</a>
@@ -105,6 +109,56 @@
         <summary>Run reproducibility <span class="sub">exact component versions + config</span></summary>
         <div id="versions" class="versions"></div>
       </details>
+    </div>
+  </section>
+
+  <!-- ===== MODELS (model bench lane): engine/quantization tuning rounds ===== -->
+  <section class="panel" id="sec-models" hidden>
+    <nav id="modelTabs" class="tabs run-tabs"></nav>
+    <div id="modelBanner" class="banner" hidden></div>
+
+    <!-- lane overview: one bar per served model -->
+    <div id="modelOverview">
+      <div class="grid">
+        <div class="card wide">
+          <h2>Decode speed <span class="sub">median output tok/s per model, over every non-warm row of its rounds</span></h2>
+          <div class="chart-box"><canvas id="mModelTps"></canvas></div>
+        </div>
+        <div class="card wide">
+          <h2>Prefill speed <span class="sub">median input tok/s per model</span></h2>
+          <div class="chart-box"><canvas id="mModelPp"></canvas></div>
+        </div>
+        <div class="card wide">
+          <h2>Verdicts <span class="sub">one row per tuning round · Δ = that round's median decode minus the median of the same model's other rounds</span></h2>
+          <div id="modelVerdicts" class="table-wrap"></div>
+          <p class="dim note">Speed only. This lane compares engine settings for one served model on one rig; it says nothing about
+            task quality, and its tok/s are not comparable to the harness lane's resolved % or to other models.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- one tuning round: legs compared inside each input-size cell -->
+    <div id="modelRunView" hidden>
+      <div class="filters">
+        <span class="filters-label">Legs</span>
+        <div id="modelLegs" class="chips"></div>
+        <button id="legAll" class="chip-btn">all</button>
+      </div>
+      <p class="dim note" id="cellNote" hidden></p>
+      <div class="grid">
+        <div class="card wide">
+          <h2>Decode speed <span class="sub">output tok/s · x = input-size cell · one bar per leg (rep counts in tooltips)</span></h2>
+          <div class="chart-box"><canvas id="mDecode"></canvas></div>
+        </div>
+        <div class="card wide">
+          <h2>Prefill speed <span class="sub">input tok/s · x = input-size cell · one bar per leg</span></h2>
+          <div class="chart-box"><canvas id="mPrefill"></canvas></div>
+        </div>
+        <div class="card wide">
+          <h2>Raw rows <span class="sub">capture order · warm-up rows dimmed · column names are the capture's (its draft counters were never documented)</span></h2>
+          <div id="modelRows" class="table-wrap rows"></div>
+        </div>
+      </div>
     </div>
   </section>
 

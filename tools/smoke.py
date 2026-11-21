@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Headless smoke test for the dashboard: every section renders, charts draw,
-no console errors, at desktop and phone widths. Exits non-zero on failure."""
+"""Headless smoke test for the dashboard: every section of both lanes renders, charts
+draw, no console errors, at desktop and phone widths. Exits non-zero on failure."""
 
 from __future__ import annotations
 
@@ -29,6 +29,13 @@ CANVASES = {
         "#cDist",
         "#cGrid",
         "#cMc",
+    ],
+    "models": [
+        "#mModelTps",
+        "#mModelPp",
+        # run-view canvases: present in the models panel, drawn only once a round is open
+        "#mDecode",
+        "#mPrefill",
     ],
 }
 
@@ -80,6 +87,24 @@ def check_page(page, label: str) -> list[str]:
             math = page.evaluate("({b: binom(5, 2), p: mcNemarP(2, 5), p2: mcNemarP(21, 1)})")
             if math["b"] != 10 or abs(math["p"] - 0.453125) > 1e-9 or math["p2"] > 1e-4:
                 errors.append(f"{label}: McNemar math wrong: {math}")
+        if section == "models":
+            # the overview is only the lane's index — open a round the way a tab click does,
+            # so the per-round charts and tables are gated too
+            rounds = page.evaluate("[...(DATA.model_runs || []).map(m => m.id)]")
+            if not rounds:
+                errors.append(f"{label}/models: DATA.model_runs is empty")
+                continue
+            page.evaluate(f"showSection('models/{rounds[0]}')")
+            page.wait_for_timeout(900)
+            for sel in ("#mDecode", "#mPrefill"):
+                el = page.query_selector(sel)
+                if el is None or (el.is_visible() and not drawn(el)):
+                    errors.append(f"{label}/models/{rounds[0]}: {sel} missing or not drawn")
+            for sel in ("#modelBanner", "#modelRows"):
+                if not page.query_selector(sel).inner_text().strip():
+                    errors.append(f"{label}/models/{rounds[0]}: {sel} empty")
+            page.evaluate("showSection('models')")
+            page.wait_for_timeout(300)
     for sel, sec in (("#rigBody", "rig"), ("#tuneBody", "calibration")):
         page.evaluate(f"showSection('{sec}')")
         page.wait_for_timeout(300)
@@ -118,9 +143,8 @@ def main() -> int:
         for e in all_errors:
             print(" -", e)
         return 1
-    print(
-        f"SMOKE OK (desktop 1280px + phone 390px, {sum(len(v) for v in CANVASES.values())} canvases, 0 console errors)"
-    )
+    n_canvas = sum(len(v) for v in CANVASES.values())
+    print(f"SMOKE OK (desktop 1280px + phone 390px, {n_canvas} canvases, 0 console errors)")
     return 0
 
 

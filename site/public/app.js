@@ -1,4 +1,6 @@
-/* HarnessBench dashboard — data/site.json → sections: overview, runs, rig, calibration */
+/* HarnessBench dashboard — data/site.json → two lanes on one page:
+   harness (overview, runs, rig, calibration, methodology) and models (engine/quantization
+   tuning rounds of the served model). One router, one chart house style, one data file. */
 const PALETTE = ["#4cc9f0","#b57bff","#3ddc84","#ffb020","#ff5d8f","#57d0ff","#9d7bff",
                  "#6fe3a0","#ffd166","#ff8fa3","#8fd3ff"];
 /* R/E/T/U outcome hues — one source of truth: instance-grid cells (drawGrid, translucent alphas)
@@ -8,7 +10,9 @@ const OLAB = {R:"resolved", E:"empty patch", T:"timeout", U:"ungraded"};
 const ORGB = {R:"61,220,132", E:"255,93,93", T:"255,176,32", U:"130,160,255"};
 const OALPHA = {R:.85, E:.5, T:.65, U:.14};
 const fmt = n => n==null ? "–" : n.toLocaleString("en-US");
-let DATA, section = "overview", runIdx = 0, hidden = new Set(), charts = {};
+const fmt1 = n => n==null ? "–" : n.toFixed(1);
+let DATA, lane = "harness", section = "overview", runIdx = 0, hidden = new Set(), charts = {};
+let modelIdx = 0, modelView = "overview", hiddenLegs = new Set();
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -43,20 +47,38 @@ function mcNemarP(a,b){ const n=a+b; if(!n) return 1;
   let s=0; for(let k=0;k<=Math.min(a,b);k++) s+=binom(n,k);
   return Math.min(1, 2*s/Math.pow(2,n)); }
 
-/* ---------- section routing ---------- */
-function showSection(name){
+/* ---------- lane + section routing ---------- */
+function showSection(route){
+  /* one router for both lanes. A route is a section name, or a pseudo-run deep link
+     "runs/<id>" / "models/<id>" — the same mechanism the run tabs already used. */
+  let name = route || "overview";
+  modelView = "overview";                     // plain "#models" always lands on the lane overview
+  if(name.startsWith("runs/")){
+    const i = DATA.runs.findIndex(r=>r.id===name.slice(5));
+    if(i>=0) runIdx = i;
+    name = "runs";
+  } else if(name.startsWith("models/")){
+    const i = (DATA.model_runs||[]).findIndex(m=>m.id===name.slice(7));
+    if(i>=0){ modelIdx = i; modelView = "run"; }
+    name = "models";
+  }
+  if(!document.getElementById("sec-"+name)) name = "overview";   // unknown hash → safe default
+  lane = name==="models" ? "models" : "harness";
   section = name;
   $$(".panel").forEach(p=>p.hidden = p.id !== "sec-"+name);
   $$("#secNav .tab").forEach(t=>t.classList.toggle("on", t.dataset.sec===name));
+  $$("#laneNav .tab").forEach(t=>t.classList.toggle("on", t.dataset.lane===lane));
+  $("#secNav").hidden = lane==="models";      // the model lane carries its own tabs in-panel
   render();
 }
 function render(){
   renderHero();
   if(section==="overview") renderOverview();
   if(section==="runs") renderRun();
+  if(section==="models") renderModels();
   if(section==="rig") renderRig();
   if(section==="calibration") renderTuning();
-  $("#foot").innerHTML=`Data regenerated ${DATA.generated} · every run stores a manifest + exact component versions under <code>runs/&lt;id&gt;/</code> · repo: <a href="https://github.com/raphaeldelors-code/harnessbench">harnessbench</a>`;
+  $("#foot").innerHTML=`Data regenerated ${DATA.generated} · harness runs keep a manifest + exact component versions under <code>runs/&lt;id&gt;/</code>, model rounds under <code>runs/m-&lt;id&gt;/</code> · repo: <a href="https://github.com/raphaeldelors-code/harnessbench">harnessbench</a>`;
 }
 
 /* ---------- chrome ---------- */
@@ -81,6 +103,7 @@ function renderChips(){
   $("#chipAll").onclick=()=>{ hidden.clear(); renderRun(); };
 }
 function renderHero(){
+  if(lane==="models") return renderModelHero();
   const cross = crossRun();
   const hs=Object.entries(cross.harnesses).map(([h,x])=>({h,v:x.pct})).sort((a,b)=>b.v-a.v);
   const nRuns=DATA.runs.length, nH=hs.length;
@@ -91,29 +114,180 @@ function renderHero(){
     <b>${hs[0].v.toFixed(0)}%</b> resolved (best cohort)</div>`;
 }
 
+/* ---------- models lane: model bench (engine / quantization tuning rounds) ----------
+   A model round asks one question: did this engine setting make the served model faster?
+   Legs are compared inside input-size cells; warm-up rows stay in the table only.
+   Nothing here is a quality or cross-model claim — the metric is tok/s on one rig. */
+const VGOOD = ["KEEP","CONFIRM-KEEP"], VBAD = ["UNDO","REVERT"];
+const vclass = v => VGOOD.includes(v) ? "keep" : (VBAD.includes(v) ? "undo" : "info");
+const vdot = v => ({keep:"#3ddc84", undo:"#ff5d5d", info:"#8a94a8"})[vclass(v)];
+const pill = v => `<span class="pill ${vclass(v)}">${v}</span>`;
+const isWarm = leg => leg.startsWith("warm");
+const mrun = () => (DATA.model_runs||[])[modelIdx];
+const shortId = id => id.replace(/^m-\d{4}-\d{2}-\d{2}-/,"");
+function medianOf(vs){
+  const v = vs.filter(x=>x!=null).sort((a,b)=>a-b);
+  if(!v.length) return null;
+  const m = v.length>>1;
+  return v.length%2 ? v[m] : (v[m-1]+v[m])/2;
+}
+function medOf(m, leg, key){ return medianOf(m.cells.map(c=>c.legs[leg] ? c.legs[leg][key] : null)); }
+
+function renderModelHero(){
+  const mrs = DATA.model_runs||[], models = DATA.models||[];
+  const nRows = mrs.reduce((a,m)=>a+m.n_rows,0), nWarm = mrs.reduce((a,m)=>a+m.n_warm,0);
+  const gpu = (DATA.hardware||{}).gpu?.model || "local GPU";
+  const rigs = [...new Set(mrs.map(m=>m.hardware).filter(Boolean))].join(", ")||"bench-rig-01";
+  const served = models.map(m=>`${m.slug}${m.quant?" · "+m.quant:""}`).join(", ");
+  const nKeep = mrs.filter(m=>vclass(m.verdict)==="keep").length;
+  $("#hero").innerHTML=`<div class="big">${mrs.length} tuning rounds · ${nRows} captured rows (${nWarm} warm-up, table only) · ${models.length} served model${models.length===1?"":"s"}
+    <b>${served||"—"}</b> on a single ${gpu} <span class="dim">(${rigs})</span></div>
+    <div class="champ"><span class="medal">⚙</span>${mrs.map(m=>`<span class="pill ${vclass(m.verdict)}">${m.verdict}</span>`).join(" ")}
+    <span class="dim">speed only — this lane makes no task-quality claim</span>${nKeep?` · <b>${nKeep}</b> kept`:``}</div>`;
+}
+function renderModels(){
+  const mrs = DATA.model_runs||[];
+  if(modelIdx>=mrs.length) modelIdx = 0;
+  renderModelTabs();
+  const inRun = modelView==="run" && mrs.length>0;
+  $("#modelBanner").hidden = !inRun;
+  $("#modelOverview").hidden = !!inRun;
+  $("#modelRunView").hidden = !inRun;
+  if(inRun) renderModelRun(mrun()); else renderModelOverview();
+}
+function renderModelTabs(){
+  /* pseudo-run tabs, exactly like #runTabs: buttons switch state, no hash churn */
+  const t = $("#modelTabs"); t.innerHTML="";
+  const mk=(label,on,fn,dot)=>{
+    const b=document.createElement("button"); b.className="tab"+(on?" on":"");
+    b.innerHTML=(dot?`<i class="dot" style="background:${dot}"></i>`:"")+label;
+    b.onclick=fn; t.appendChild(b);
+  };
+  mk("Models overview", !modelView||modelView==="overview", ()=>{ modelView="overview"; render(); });
+  (DATA.model_runs||[]).forEach((m,i)=>mk(shortId(m.id), modelView==="run"&&i===modelIdx,
+    ()=>{ modelIdx=i; modelView="run"; hiddenLegs.clear(); render(); }, vdot(m.verdict)));
+}
+function renderModelRun(m){
+  const c = vclass(m.verdict);
+  const b = $("#modelBanner"); b.className = "banner "+c;
+  const model = [m.model.slug||m.id, m.model.quant, m.model.family].filter(Boolean).join(" · ");
+  const meta = [m.date, m.hardware, `${m.n_rows} rows${m.n_warm?` (${m.n_warm} warm-up, table only)`:""}`,
+                `legs ${m.legs.join(" / ")||"—"}`].join(" · ");
+  b.innerHTML=`${pill(m.verdict)}
+    <div><h2>${m.title}</h2>
+      <div class="meta">${model} · ${m.engine||"engine unrecorded"}</div>
+      <div class="meta">${meta}</div>
+      ${m.notes?`<div class="meta">${m.notes}</div>`:""}</div>`;
+  renderLegChips(m);
+  modelNote(m);
+  cellChart(m, "#mDecode", "tps", "output tok/s", "output tok/s");
+  cellChart(m, "#mPrefill", "pp", "input tok/s", "input tok/s");
+  modelRows(m);
+}
+function modelNote(m){
+  /* Say out loud when a round's cells do not actually match the legs up on prompt length —
+     the charts would otherwise imply a comparison the capture does not contain. */
+  const note = $("#cellNote");
+  const cells = m.cells || [];
+  if(cells.some(c=>c.in_tok==null)){
+    note.hidden = false;
+    note.textContent = "Some rows of this round recorded no input size, so their bars share one unlabelled cell and are not matched on prompt length — read the raw rows below before comparing legs.";
+    return;
+  }
+  const matched = cells.some(c=>m.legs.filter(l=>c.legs[l] && c.legs[l].tps!=null).length > 1);
+  note.hidden = matched;
+  if(!matched) note.textContent = "In this round each input size was measured by a single leg, so no cell holds two legs side by side — the round-level medians in the verdict table are the only comparison it supports.";
+}
+function renderLegChips(m){
+  /* leg chips are this lane's legend (house style keeps chart legends off) — colors come
+     from the shared PALETTE keyed on the run's own leg order */
+  const c = $("#modelLegs"); c.innerHTML="";
+  m.legs.forEach(l=>{
+    const el=document.createElement("span");
+    el.className="chip"+(hiddenLegs.has(l)?" off":"");
+    el.innerHTML=`<i style="background:${color(l,m.legs)}"></i>${l}`;
+    el.onclick=()=>{ hiddenLegs.has(l)?hiddenLegs.delete(l):hiddenLegs.add(l); renderModelRun(m); };
+    c.appendChild(el);
+  });
+  $("#legAll").onclick=()=>{ hiddenLegs.clear(); renderModelRun(m); };
+}
+function cellChart(m, id, key, yTitle, unit){
+  /* x = input-size cell (the ladder is the measurement design: same prompt size, legs side by
+     side), so the house-style descending sort governs the leg order, not the x axis. */
+  const legs = m.legs.filter(l=>!hiddenLegs.has(l)).sort((a,b)=>(medOf(m,b,key)??-Infinity)-(medOf(m,a,key)??-Infinity));
+  const cells = m.cells.filter(c=>legs.some(l=>c.legs[l] && c.legs[l][key]!=null));
+  if(!legs.length || !cells.length){ dropChart(id); return; }
+  const narrow = narrowBox(id);
+  mkChart(id,{type:"bar",
+    data:{labels:cells.map(c=>lab(c.cell,narrow)),
+      datasets:legs.map(l=>({label:l,                                   // label feeds the tooltip
+        data:cells.map(c=>c.legs[l] ? c.legs[l][key] : null),           // null → Chart.js gap
+        backgroundColor:color(l,m.legs), borderRadius:8, maxBarThickness:46}))},
+    options:{...baseOpts, plugins:{...baseOpts.plugins,
+      tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:cn=>{
+        const e = cells[cn.dataIndex].legs[cn.dataset.label];
+        if(!e || cn.parsed.y==null) return "";                 // cell not measured for this leg
+        return `${cn.parsed.y.toFixed(1)} ${unit} · ${e.n} rep${e.n>1?"s":""} in this cell`;}}}},
+      scales:scaled(narrow,yTitle)}});
+}
+function modelRows(m){
+  const head=["leg","tag","input tok","output tok","prefill tok/s","decode tok/s","draft","draft_acc"];
+  let html="<table><thead><tr>"+head.map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody>";
+  m.rows.forEach(r=>{
+    const cells=[r.leg||"—", r.tag||"—", fmt(r.in_tok), fmt(r.out_tok), fmt1(r.pp), fmt1(r.tps),
+                 fmt(r.draft), fmt(r.draft_acc)];
+    html+=`<tr${isWarm(r.leg||"")?' class="dim"':""}>`+cells.map(v=>`<td>${v}</td>`).join("")+"</tr>";
+  });
+  $("#modelRows").innerHTML=html+"</tbody></table>";
+}
+function renderModelOverview(){
+  const models = DATA.models||[];
+  if(!models.length){
+    dropChart("#mModelTps"); dropChart("#mModelPp");
+    $("#modelVerdicts").innerHTML="<p class='dim'>No model runs published yet.</p>";
+    return;
+  }
+  const names = models.map(m=>m.slug);
+  // build.py already returns models sorted by median decode; keep the non-null subset charted
+  bars("#mModelTps", models.filter(m=>m.tps!=null).map(m=>({label:m.slug,name:m.slug,v:m.tps,raw:m})),
+    "output tok/s", (v,n,x)=>`${v.toFixed(1)} median output tok/s · ${x.raw.n_runs} round${x.raw.n_runs>1?"s":""}`+
+      (x.raw.tps_range?` · spread ${fmt1(x.raw.tps_range[0])}–${fmt1(x.raw.tps_range[1])}`:""), names);
+  bars("#mModelPp", models.filter(m=>m.pp!=null).map(m=>({label:m.slug,name:m.slug,v:m.pp,raw:m})),
+    "input tok/s", (v,n,x)=>`${v.toFixed(1)} median input tok/s · ${x.raw.n_runs} round${x.raw.n_runs>1?"s":""}`, names);
+  modelVerdicts(models);
+}
+function modelVerdicts(models){
+  let html="<table><thead><tr><th>model</th><th>round</th><th>date</th><th>verdict</th>"+
+    "<th>decode tok/s</th><th>Δ vs other rounds</th><th>prefill tok/s</th><th>rows · legs</th></tr></thead><tbody>";
+  models.forEach(m=>m.verdicts.forEach(v=>{
+    // Δ against the sibling rounds' medians — the lane's own noise reference, not a p-value
+    const base = medianOf(m.verdicts.filter(x=>x.id!==v.id).map(x=>x.tps));
+    let d='<span class="dim">—</span>';
+    if(v.tps!=null && base!=null){
+      const dv = v.tps-base;
+      d=`<span class="${dv>0?"up":(dv<0?"down":"dim")}">${dv>0?"+":""}${dv.toFixed(1)}</span>`;
+    }
+    html+=`<tr><td>${m.slug}</td><td>${shortId(v.id)}</td><td>${v.date}</td><td>${pill(v.verdict)}</td>`+
+      `<td>${fmt1(v.tps)}</td><td>${d}</td><td>${fmt1(v.pp)}</td>`+
+      `<td class="dim">${v.n_rows} · ${v.legs.join("/")||"—"}</td></tr>`;
+  }));
+  $("#modelVerdicts").innerHTML=html+"</tbody></table>";
+}
+
 /* ---------- overview: cross-run aggregation ---------- */
 function renderOverview(){
   const cross = crossRun();
   const names = Object.keys(cross.harnesses);
-  const box = $("#oResolved").closest(".chart-box");
-  const narrow = box.clientWidth < 620;
-  const lab = n => narrow && n.length > 9 ? n.slice(0,8)+"…" : n;
-  const rowBar = (id, valFn, fmtTip) => {
-    const rows = names.map(h=>({h, v: valFn(cross.harnesses[h])})).sort((a,b)=>b.v-a.v);
-    mkChart(id,{type:"bar",data:{labels:rows.map(x=>lab(x.h)),
-      datasets:[{data:rows.map(x=>x.v),backgroundColor:rows.map(x=>PALETTE[names.indexOf(x.h)%PALETTE.length]),
-        borderRadius:8,maxBarThickness:46}]},
-      options:{...baseOpts, plugins:{...baseOpts.plugins,
-        tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y)+" · "+rows[c.dataIndex].h}}},
-        scales:scaled(narrow)}});
-  };
+  const rowBar = (id, valFn, fmtTip) =>
+    bars(id, names.map(h=>({label:h,name:h,v:valFn(cross.harnesses[h])})).sort((a,b)=>b.v-a.v),
+         null, (v,h)=>fmtTip(v)+" · "+h, names);
   rowBar("#oResolved", h=>h.pct, v=>v.toFixed(0)+"% resolved");
   rowBar("#oTok", h=>h.input_tokens/1e6, v=>v.toFixed(1)+"M input tokens");
   rowBar("#oThr", h=>h.resolved_per_gpu_h, v=>v.toFixed(2)+" resolved / GPU-h");
   rowBar("#oWall", h=>h.wall_s/60/h.n_inst, v=>Math.round(v)+" min wall per instance (best run)");
   let html="<table><thead><tr><th>harness</th>"+DATA.runs.map(r=>`<th>${r.id.replace(/-strata-iq3s/,"")}</th>`).join("")+"</tr></thead><tbody>";
   names.forEach(h=>{
-    html+=`<tr><td><i class="dot" style="background:${PALETTE[names.indexOf(h)%PALETTE.length]}"></i>${h}</td>`;
+    html+=`<tr><td><i class="dot" style="background:${color(h,names)}"></i>${h}</td>`;
     DATA.runs.forEach(r=>{
       const x=r.harnesses[h];
       if(!x){ html+="<td class='dim'>—</td>"; return; }
@@ -194,17 +368,25 @@ const baseOpts = {
 };
 function narrowBox(id){ const b=$(id).closest(".chart-box, .hm"); return b && b.clientWidth<620; }
 function lab(n, narrow){ return narrow && n.length>9 ? n.slice(0,8)+"…" : n; }
-function barSorted(id, valFn, yTitle, fmtTip){
-  const r=run();
+function dropChart(id){ if(charts[id]){ charts[id].destroy(); charts[id]=null; } }
+/* The house style in one place: full-opacity PALETTE fill keyed on the series name,
+   borderRadius 8, one bar per row, labels shortened inside a narrow box. Callers sort
+   rows by descending value (the x order may be a semantic ladder instead — see cellChart).
+   fmtTip(value, name, row) → the caller owns the tooltip wording. */
+function bars(id, rows, yTitle, fmtTip, names){
+  if(!rows.length){ dropChart(id); return; }
   const narrow=narrowBox(id);
-  const rows=visible().map(h=>({h,v:valFn(r.harnesses[h])})).sort((a,b)=>b.v-a.v);
-  if(!rows.length) return;
-  mkChart(id,{type:"bar",data:{labels:rows.map(x=>lab(x.h,narrow)),
-    datasets:[{data:rows.map(x=>x.v),backgroundColor:rows.map(x=>color(x.h)),
+  mkChart(id,{type:"bar",data:{labels:rows.map(x=>lab(x.label,narrow)),
+    datasets:[{data:rows.map(x=>x.v),backgroundColor:rows.map(x=>color(x.name,names)),
       borderRadius:8,maxBarThickness:46}]},
     options:{...baseOpts, plugins:{...baseOpts.plugins,
-      tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y, rows[c.dataIndex].h)}}},
+      tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y, rows[c.dataIndex].name, rows[c.dataIndex])}}},
       scales:scaled(narrow,yTitle)}});
+}
+function barSorted(id, valFn, yTitle, fmtTip){
+  const r=run();
+  bars(id, visible().map(h=>({label:h,name:h,v:valFn(r.harnesses[h])})).sort((a,b)=>b.v-a.v),
+       yTitle, fmtTip, harnessNames());
 }
 
 /* failure mix: one stacked bar per harness, R/E/T/U counted out of per_instance (same hues as the grid) */
@@ -344,7 +526,7 @@ function distChart(){
     return {h, n:w.length, lo:q(w,.1), med:q(w,.5), hi:q(w,.9)}; })
     .filter(x=>x.n>=5)          // p10/p90 needs ≥5 samples; tiny windows sets (mini: 1–4 incl. hangs) blow up the scale
     .sort((a,b)=>b.med-a.med);   // same descending-value ordering as every other bar chart
-  if(!rows.length){ if(charts.cDist){charts.cDist.destroy(); charts.cDist=null;} return; }
+  if(!rows.length){ dropChart("#cDist"); return; }
   const dropped=hs.filter(h=>!rows.some(x=>x.h===h));
   const dn=$("#distNote");
   if(dn){ dn.hidden=!dropped.length; dn.textContent=dropped.length?`Excluded (fewer than 5 timed instances): ${dropped.join(", ")}`:""; }
@@ -392,15 +574,12 @@ function renderTuning(){
 fetch("data/site.json").then(r=>r.json()).then(d=>{ DATA=d;
   runIdx = DATA.runs.reduce((b,r,i,a)=> r.n_instances > a[b].n_instances ? i : b, 0);
   fetch("data/tuning.json").then(r=>r.ok?r.json():null).then(t=>{TUNING=t; if(section==="calibration") renderTuning();}).catch(()=>{});
-  // deep links: #runs / #calibration / #runs/<run-id>
+  // deep links: #overview · #runs(/<id>) · #models(/<id>) · #rig · #calibration · #methodology
   const h=(location.hash||"").slice(1);
-  let sec="overview";
-  if(h.startsWith("runs/")){ const i=DATA.runs.findIndex(r=>r.id===h.slice(5)); if(i>=0) runIdx=i; sec="runs"; }
-  else if(["runs","rig","calibration","methodology"].includes(h)) sec=h;
-  $$("#secNav .tab").forEach(t=>t.onclick=e=>{ e.preventDefault(); location.hash=t.dataset.sec; showSection(t.dataset.sec); });
-  window.addEventListener("hashchange",()=>{ const hh=(location.hash||"").slice(1);
-    if(hh.startsWith("runs/")){ const i=DATA.runs.findIndex(r=>r.id===hh.slice(5)); if(i>=0){ runIdx=i; showSection("runs"); } }
-    else if(hh) showSection(hh); });
+  const go=route=>{ location.hash=route; showSection(route); };
+  $$("#secNav .tab").forEach(t=>t.onclick=e=>{ e.preventDefault(); go(t.dataset.sec); });
+  $$("#laneNav .tab").forEach(t=>t.onclick=e=>{ e.preventDefault(); go((t.getAttribute("href")||"#overview").slice(1)); });
+  window.addEventListener("hashchange",()=>{ const hh=(location.hash||"").slice(1); if(hh) showSection(hh); });
   let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{ render(); },250); });
-  showSection(sec);
+  showSection(h||"overview");
 });
