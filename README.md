@@ -96,7 +96,8 @@ data/hardware.json  the bench rig spec (CPU, RAM, GPU, PCIe gen/lanes, board)
   all data, rebuild the site, and run a headless-browser smoke test at 1280px and
   390px — every canvas must contain pixels, zero console errors — before Pages deploy.
 - **Hardware**: [data/hardware.json](data/hardware.json) pins the rig
-  (RTX 3090 24 GiB, PCIe Gen4 x16, Ryzen 5 5600G, 64 GiB DDR4-3600).
+  (RTX 3090 24 GiB @ PCIe Gen3 x16 — the 5600G APU has no Gen4 lanes,
+  GPU-side Gen4 capability never negotiates; Ryzen 5 5600G, 64 GiB DDR4-3600).
 
 ## Harness invocation parity
 

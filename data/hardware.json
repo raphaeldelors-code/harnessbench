@@ -13,7 +13,7 @@
   "gpu": {
     "model": "NVIDIA GeForce RTX 3090",
     "vram_gib": 24,
-    "pcie_generation": "Gen4 (8 GT/s)",
+    "pcie_generation": "Gen3 (8 GT/s; Ryzen 5 5600G CPU ceiling — the Gen4-capable 3090 negotiates Gen3 x16 on Cezanne)",
     "pcie_lanes": "x16 (link capability and negotiated state)"
   },
   "board": "ASRock B550 Phantom Gaming-ITX/ax",
