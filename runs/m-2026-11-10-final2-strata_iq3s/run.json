@@ -1,0 +1,99 @@
+{
+  "schema_version": "hb-modelrun-v1",
+  "id": "m-2026-11-10-final2-strata_iq3s",
+  "kind": "model",
+  "date": "2026-11-10",
+  "title": "Agentic showdown round - final2, 20-step cap",
+  "model": {
+    "slug": "strata_iq3s",
+    "quant": "Qwen Flash Next IQ3_S",
+    "family": "local"
+  },
+  "engine": "strata (llama.cpp fork) via llama-swap",
+  "verdict": "INFO",
+  "hardware": "bench-rig-01",
+  "notes": "provenance: agentswe final2 artifacts captured from bench-rig-01 (RESULTS.md, no activity telemetry in the capture); mini-swe-agent via llama-swap :8080, T=0, 20-step cap, sb10 x10. 0 patches, 10/10 LimitsExceeded at 20 steps per RESULTS.md; the indicative activity-API telemetry quoted there (~172 t/s prefill, ~89 t/s decode, mixed prod+bench traffic) is not an agent-phase median, so no speed row is recorded.",
+  "agentic": {
+    "steps_cap": 20,
+    "temperature": 0,
+    "n_instances": 10,
+    "resolved": 0,
+    "unresolved": 0,
+    "empty": 10,
+    "partial_credit": null,
+    "gpu_hours": null,
+    "resolved_per_gpu_h": null,
+    "per_instance": [
+      {
+        "instance": "pallets__flask-5014",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1142",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1724",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1766",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1921",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-2317",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "pylint-dev__pylint-4551",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "pylint-dev__pylint-4604",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "pytest-dev__pytest-10051",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "pytest-dev__pytest-10081",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      }
+    ]
+  }
+}

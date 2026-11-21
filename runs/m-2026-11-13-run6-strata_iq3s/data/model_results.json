@@ -1,0 +1,14 @@
+{
+  "rows": [
+    {
+      "leg": "agent_phase",
+      "tag": "agent_phase",
+      "in_tok": null,
+      "out_tok": null,
+      "pp": 352.5,
+      "tps": 112.2,
+      "draft": null,
+      "draft_acc": null
+    }
+  ]
+}

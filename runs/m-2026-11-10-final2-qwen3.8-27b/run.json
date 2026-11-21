@@ -1,0 +1,99 @@
+{
+  "schema_version": "hb-modelrun-v1",
+  "id": "m-2026-11-10-final2-qwen3.8-27b",
+  "kind": "model",
+  "date": "2026-11-10",
+  "title": "Agentic showdown round - final2, 20-step cap",
+  "model": {
+    "slug": "qwen3.8-27b",
+    "quant": "unsloth Q5_K_S (llama.cpp)",
+    "family": "local"
+  },
+  "engine": "llama.cpp via llama-swap",
+  "verdict": "PASS",
+  "hardware": "bench-rig-01",
+  "notes": "provenance: agentswe final2 artifacts captured from bench-rig-01 (RESULTS.md, no activity telemetry in the capture); mini-swe-agent via llama-swap :8080, T=0, 20-step cap, sb10 x10. the 2026-11-10 leg was never re-scored (no partial-credit table) and its report JSONs (logs/run_evaluation/qwen_final2) are not in the copied artifacts, so tally, per-instance result and the 4 LimitsExceeded steps=20 rows come from RESULTS.md prose only; RESULTS.md calls the httpbin PASS_TO_PASS failure on requests-1724/1766/2317 a network-dependent flake that also failed on 2317, and reads true capability as 4-5/10 -- recorded as 3/10 here.",
+  "agentic": {
+    "steps_cap": 20,
+    "temperature": 0,
+    "n_instances": 10,
+    "resolved": 3,
+    "unresolved": 3,
+    "empty": 4,
+    "partial_credit": null,
+    "gpu_hours": null,
+    "resolved_per_gpu_h": null,
+    "per_instance": [
+      {
+        "instance": "pallets__flask-5014",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1142",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1724",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1766",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1921",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-2317",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pylint-dev__pylint-4551",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "pylint-dev__pylint-4604",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "pytest-dev__pytest-10051",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pytest-dev__pytest-10081",
+        "result": "empty",
+        "steps": 20,
+        "credit": null,
+        "patch": false
+      }
+    ]
+  }
+}

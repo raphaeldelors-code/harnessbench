@@ -1,0 +1,99 @@
+{
+  "schema_version": "hb-modelrun-v1",
+  "id": "m-2026-11-12-run4-strata_iq3_xxs",
+  "kind": "model",
+  "date": "2026-11-12",
+  "title": "Agentic showdown round - run4, 20-step cap",
+  "model": {
+    "slug": "strata_iq3_xxs",
+    "quant": "UD-IQ3_XXS v3.1 (Qwen Flash Next)",
+    "family": "local"
+  },
+  "engine": "strata (llama.cpp fork) via llama-swap",
+  "verdict": "PARTIAL",
+  "hardware": "bench-rig-01",
+  "notes": "provenance: agentswe run4 artifacts captured from bench-rig-01 (RESULTS_run4.md, RESULTS_partial.md, logs/run4_strata_iq3_xxs/openai__strata_iq3_xxs report JSONs, activity4.jsonl + run4.log PHASE windows); mini-swe-agent via llama-swap :8080, T=0, 20-step cap, sb10 x10, max_tokens 4096. table credits 2.00 across exactly the 2 resolved instances; prose and eval agree on 2/10.",
+  "agentic": {
+    "steps_cap": 20,
+    "temperature": 0,
+    "n_instances": 10,
+    "resolved": 2,
+    "unresolved": 0,
+    "empty": 8,
+    "partial_credit": 2.0,
+    "gpu_hours": 0.7,
+    "resolved_per_gpu_h": 2.86,
+    "per_instance": [
+      {
+        "instance": "pallets__flask-5014",
+        "result": "resolved",
+        "steps": 16,
+        "credit": 1.0,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1142",
+        "result": "empty",
+        "steps": 20,
+        "credit": 0.0,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1724",
+        "result": "empty",
+        "steps": 20,
+        "credit": 0.0,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1766",
+        "result": "empty",
+        "steps": 20,
+        "credit": 0.0,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1921",
+        "result": "empty",
+        "steps": 20,
+        "credit": 0.0,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-2317",
+        "result": "empty",
+        "steps": 20,
+        "credit": 0.0,
+        "patch": false
+      },
+      {
+        "instance": "pylint-dev__pylint-4551",
+        "result": "empty",
+        "steps": 20,
+        "credit": 0.0,
+        "patch": false
+      },
+      {
+        "instance": "pylint-dev__pylint-4604",
+        "result": "empty",
+        "steps": 20,
+        "credit": 0.0,
+        "patch": false
+      },
+      {
+        "instance": "pytest-dev__pytest-10051",
+        "result": "empty",
+        "steps": 20,
+        "credit": 0.0,
+        "patch": false
+      },
+      {
+        "instance": "pytest-dev__pytest-10081",
+        "result": "resolved",
+        "steps": 15,
+        "credit": 1.0,
+        "patch": true
+      }
+    ]
+  }
+}
