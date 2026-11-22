@@ -23,6 +23,24 @@
     "partial_credit": 2.0,
     "gpu_hours": 0.86,
     "resolved_per_gpu_h": 1.16,
+    "perf": {
+      "requests": null,
+      "in_tokens": null,
+      "out_tokens": null,
+      "encode_avg": null,
+      "encode_med": null,
+      "decode_avg": null,
+      "decode_med": null,
+      "cache_pct": null,
+      "mtp_acc_pct": null,
+      "max_out": null,
+      "n_out_gt4096": null,
+      "n_out_gt8192": null,
+      "errors": null,
+      "phase_wall_s": null,
+      "cap_tokens": 4096,
+      "vram_gib": 22.3
+    },
     "per_instance": [
       {
         "instance": "pallets__flask-5014",

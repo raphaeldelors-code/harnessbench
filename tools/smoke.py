@@ -36,6 +36,12 @@ CANVASES = {
         # run-view canvases: present in the models panel, drawn only once a round is open
         "#mDecode",
         "#mPrefill",
+        # performance-view canvases: hidden until the Performance submenu chip is on (and hidden
+        # per chart when no round recorded that figure), so the submenu walk below gates them
+        "#pfDecode",
+        "#pfEncode",
+        "#pfCache",
+        "#pfMTP",
     ],
 }
 
@@ -134,6 +140,60 @@ def check_page(page, label: str) -> list[str]:
                 if not comparable and not page.query_selector("#cellNote").inner_text().strip():
                     errors.append(f"{label}/models/{rid}: one leg per cell, but no #cellNote disclaimer")
                 errors += overflow_errors(page, label, f"models/{rid}")
+            # the lane submenu switches views in place, exactly as its chips do, so each view's
+            # own charts, notes and phone overflow get gated (the CANVASES pass above finds the
+            # performance canvases hidden there and skips them — that is what this walk is for)
+            for view in ("showdown", "perf"):
+                page.evaluate(f"showSection('models'); modelView = '{view}'; render()")
+                page.wait_for_timeout(800)
+                where = f"models/{view}"
+                # the submenu must carry an active chip, and it must be a button: these switch what
+                # is on screen, so the keyboard has to be able to reach and operate them
+                if not page.evaluate("document.querySelector('#modelSub .chip.on')?.tagName === 'BUTTON'"):
+                    errors.append(f"{label}/{where}: submenu has no active chip button")
+                if view == "showdown":
+                    night, newest, nights = page.evaluate(
+                        "[sdNight, sdNights(sdRuns())[0], sdNights(sdRuns()).length]"
+                    )
+                    if night != newest:
+                        errors.append(f"{label}/{where}: night is {night}, newest night is {newest}")
+                    if not page.query_selector_all("#sdCards .sd-card"):
+                        errors.append(f"{label}/{where}: no round cards for night {night}")
+                    stray = page.evaluate(
+                        """() => [...document.querySelectorAll('#sdCards .sd-card')]
+                               .filter(c => !c.title.includes('-' + sdNight + '-'))
+                               .map(c => c.title)"""
+                    )
+                    if stray:
+                        errors.append(f"{label}/{where}: cards outside the night: {stray[:3]}")
+                    if nights > 1 and not page.query_selector("#sdNightNote").inner_text().strip():
+                        errors.append(f"{label}/{where}: nights filtered with no #sdNightNote line")
+                    # switching night is a click, not a page load: the cards change in place
+                    if nights > 1:
+                        cards = "#sdCards .sd-card"
+                        before = [c.get_attribute("title") for c in page.query_selector_all(cards)]
+                        page.evaluate("document.querySelectorAll('#sdNights .chip')[1].click()")
+                        page.wait_for_timeout(400)
+                        after = [c.get_attribute("title") for c in page.query_selector_all(cards)]
+                        if before == after:
+                            errors.append(f"{label}/{where}: night chip click left the cards unchanged")
+                    if page.evaluate("location.hash") != "#models":
+                        errors.append(f"{label}/{where}: night chip navigated instead of re-rendering")
+                else:
+                    for sel in ("#pfCap", "#pfCapNote"):
+                        if not page.query_selector(sel).inner_text().strip():
+                            errors.append(f"{label}/{where}: {sel} empty")
+                    for cid in ("#pfDecode", "#pfEncode", "#pfCache", "#pfMTP"):
+                        el = page.query_selector(cid)
+                        if el is None:
+                            errors.append(f"{label}/{where}: missing {cid}")
+                        elif el.is_visible() and not drawn(el):
+                            errors.append(f"{label}/{where}: {cid} has no pixels (empty chart)")
+                        elif (
+                            not el.is_visible() and not page.query_selector(f"{cid}Note").inner_text().strip()
+                        ):
+                            errors.append(f"{label}/{where}: {cid} hidden with nothing said about it")
+                errors += overflow_errors(page, label, where)
             page.evaluate("showSection('models')")
             page.wait_for_timeout(300)
     for sel, sec in (("#rigBody", "rig"), ("#tuneBody", "calibration")):

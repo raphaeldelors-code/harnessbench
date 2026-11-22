@@ -13,7 +13,7 @@ const fmt = n => n==null ? "–" : n.toLocaleString("en-US");
 const fmt1 = n => n==null ? "–" : n.toFixed(1);
 const fmt2 = n => n==null ? "–" : n.toFixed(2);
 let DATA, lane = "harness", section = "overview", runIdx = 0, hidden = new Set(), charts = {};
-let modelIdx = 0, modelView = "overview", hiddenLegs = new Set();
+let modelIdx = 0, modelView = "overview", hiddenLegs = new Set(), sdNight = null;
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -134,10 +134,33 @@ const mrun = () => (DATA.model_runs||[])[modelIdx];
 const shortId = id => id.replace(/^m-\d{4}-\d{2}-\d{2}-/,"");
 const sdRuns = () => (DATA.model_runs||[]).filter(m=>m.agentic);
 const SD_CHARTS = ["#sdResolved","#sdEff"];
+const PF_CHARTS = ["#pfDecode","#pfEncode","#pfCache","#pfMTP"];
 /* the artifact round a showdown card belongs to: id minus its date prefix and its model-slug
    suffix ("m-2026-11-14-run7-strata_iq3s" → "run7"); falls back to the whole short id */
 const runLabel = m => { const s = shortId(m.id), slug = (m.model||{}).slug||"";
   return slug && s.endsWith("-"+slug) ? (s.slice(0, -slug.length-1) || s) : s; };
+/* bench nights, newest first: the round's run label is the night key, dated by its newest round */
+function sdNights(runs){
+  const last = {};
+  runs.forEach(m=>{ const k=runLabel(m); if(!last[k] || m.date>last[k]) last[k]=m.date; });
+  return Object.keys(last).sort((a,b)=> last[b].localeCompare(last[a]) || a.localeCompare(b));
+}
+/* Agent-phase performance of the showdown rounds (manifest `agentic.perf`): how fast the served
+   build was while mini-swe-agent drove it. Copied into the manifest from the round's own capture —
+   nothing here is recomputed, and a field the capture did not record stays blank, never zero. */
+const perfOf = m => (m.agentic||{}).perf || {};
+/* chart label: night + slug without its "strata_" prefix ("…run4-strata_iq3s" → "run4 iq3s") */
+const pfLabel = m => { const slug = (m.model||{}).slug||"";
+  return [runLabel(m), slug.replace(/^strata_/,"")].filter(Boolean).join(" "); };
+function pfRows(runs, key){
+  return runs.filter(m=>perfOf(m)[key]!=null)
+    .map(m=>({label:pfLabel(m), name:pfLabel(m), v:perfOf(m)[key], raw:m}))
+    .sort((a,b)=>(b.v-a.v) || a.label.localeCompare(b.label));      // house style: descending value
+}
+/* No request count means the round was never swept as a window, so its medians are the round
+   write-up's prose figures — the charts have to say that instead of implying a measured window. */
+const pfProse = m => perfOf(m).requests==null;
+const pfProseTip = m => pfProse(m) ? " · quoted median from the round write-up, not a window statistic" : "";
 function medianOf(vs){
   const v = vs.filter(x=>x!=null).sort((a,b)=>a-b);
   if(!v.length) return null;
@@ -169,28 +192,47 @@ function renderModelHero(){
 function renderModels(){
   const mrs = DATA.model_runs||[];
   if(modelIdx>=mrs.length) modelIdx = 0;
-  if(modelView==="showdown" && !mrs.some(m=>m.agentic)) modelView = "overview";
-  renderModelTabs();
+  /* the showdown and performance views are both about agentic rounds — without any, they have
+     nothing to show, so the lane falls back to its tuning overview */
+  if((modelView==="showdown" || modelView==="perf") && !mrs.some(m=>m.agentic)) modelView = "overview";
+  renderModelTabs(); renderModelSub();
   const inRun = modelView==="run" && mrs.length>0;
   $("#modelBanner").hidden = !inRun;
   $("#modelOverview").hidden = modelView!=="overview";
   $("#modelShowdown").hidden = modelView!=="showdown";
+  $("#modelPerf").hidden = modelView!=="perf";
   $("#modelRunView").hidden = !inRun;
   if(modelView==="showdown") renderShowdown();
+  else if(modelView==="perf") renderModelPerf();
   else if(inRun) renderModelRun(mrun());
   else renderModelOverview();
 }
+function renderModelSub(){
+  /* the lane's three views, in chip style like the leg chips. Buttons, not spans: these switch
+     what is on screen, so they have to be tabbable and operable from the keyboard. */
+  const c = $("#modelSub"); c.innerHTML="";
+  const sd = sdRuns().length;
+  [["overview","Overview"],["showdown","Showdown"],["perf","Performance"]].forEach(([view,label])=>{
+    if(view!=="overview" && !sd) return;
+    const on = modelView===view;
+    const b = document.createElement("button");
+    b.type="button"; b.className="chip"+(on?" on":"");
+    b.setAttribute("aria-pressed", on?"true":"false");
+    b.textContent = label;
+    b.onclick=()=>{ modelView=view; render(); };
+    c.appendChild(b);
+  });
+}
 function renderModelTabs(){
-  /* pseudo-run tabs, exactly like #runTabs: buttons switch state, no hash churn */
+  /* pseudo-run tabs, exactly like #runTabs: buttons switch state, no hash churn. The row lists the
+     rounds only — which of the lane's three views is open belongs to the submenu above it, so the
+     tabs no longer carry an overview/showdown pair that would fight it for the same state. */
   const t = $("#modelTabs"); t.innerHTML="";
   const mk=(label,on,fn,dot)=>{
     const b=document.createElement("button"); b.className="tab"+(on?" on":"");
     b.innerHTML=(dot?`<i class="dot" style="background:${dot}"></i>`:"")+label;
     b.onclick=fn; t.appendChild(b);
   };
-  mk("Models overview", !modelView||modelView==="overview", ()=>{ modelView="overview"; render(); });
-  const sd = sdRuns();
-  if(sd.length) mk(`Showdown (${sd.length})`, modelView==="showdown", ()=>{ modelView="showdown"; render(); }, "#4cc9f0");
   (DATA.model_runs||[]).forEach((m,i)=>mk(shortId(m.id), modelView==="run"&&i===modelIdx,
     ()=>{ modelIdx=i; modelView="run"; hiddenLegs.clear(); render(); }, vdot(m.verdict)));
 }
@@ -208,7 +250,7 @@ function renderModelRun(m){
       <div class="meta">${model} · ${m.engine||"engine unrecorded"}</div>
       <div class="meta">${meta}</div>
       ${m.notes?`<div class="meta">${m.notes}</div>`:""}</div>`;
-  SD_CHARTS.forEach(dropChart);
+  SD_CHARTS.forEach(dropChart); PF_CHARTS.forEach(dropChart);
   if(ag){
     /* a showdown round has no tuning legs: its score is the outcome, its only row is telemetry
        the agent work produced — so the leg charts would draw empty axes over a real result. */
@@ -290,7 +332,7 @@ function renderModelOverview(){
   const models = DATA.models||[];
   // the round-view charts belong to an open round; don't leave them attached to hidden canvases
   dropChart("#mDecode"); dropChart("#mPrefill");
-  SD_CHARTS.forEach(dropChart);
+  SD_CHARTS.forEach(dropChart); PF_CHARTS.forEach(dropChart);
   if(!models.length){
     dropChart("#mModelTps"); dropChart("#mModelPp");
     $("#modelVerdicts").innerHTML="<p class='dim'>No model runs published yet.</p>";
@@ -334,13 +376,21 @@ function modelVerdicts(models){
 const SDCELL = {resolved:["r","resolved"], unresolved:["u","unresolved — patch submitted, eval failed it"],
                 empty:["e","empty — step cap hit, no patch submitted"]};
 function renderShowdown(){
-  dropChart("#mDecode"); dropChart("#mPrefill");
+  dropChart("#mDecode"); dropChart("#mPrefill"); PF_CHARTS.forEach(dropChart);
   const runs = sdRuns();
   if(!runs.length){
     SD_CHARTS.forEach(dropChart);
     $("#sdCards").innerHTML = "<p class='dim'>No agentic showdown rounds published.</p>";
     return;
   }
+  const nights = sdNights(runs);
+  if(!nights.includes(sdNight)) sdNight = nights[0];   // default: the newest night (final protocol)
+  renderSdNights(runs, nights);
+  const named = runs.filter(m=>runLabel(m)===sdNight);
+  const note = $("#sdNightNote");
+  note.hidden = nights.length<2;
+  note.textContent = nights.length<2 ? ""
+    : `Cards below are the ${named.length} ${sdNight} rounds of ${runs.length} in total. The two bars above score every bench night together, so they do not move when the chip changes.`;
   const names = runs.map(m=>shortId(m.id));     // one PALETTE hue per round, like every bars() caller
   const desc = (a,b) => (b.v-a.v) || a.label.localeCompare(b.label);
   const rows = runs.map(m=>({label:shortId(m.id), name:shortId(m.id), v:m.agentic.resolved, raw:m}));
@@ -355,10 +405,25 @@ function renderShowdown(){
   $("#sdEffCard").hidden = !eff.length;
   bars("#sdEff", eff, "resolved / GPU-hour",
     (v,n,x)=>`${v.toFixed(2)} resolved / GPU-h · ${x.raw.agentic.resolved} resolved in ${fmt2(x.raw.agentic.gpu_hours)} GPU-h`, names);
-  $("#sdCards").innerHTML = runs.map(sdCard).join("");
+  $("#sdCards").innerHTML = named.map(sdCard).join("");
+}
+function renderSdNights(runs, nights){
+  /* second-level chips inside the showdown view: one bench night of round cards at a time.
+     The counts sit in the labels because the nights do not hold equal numbers of rounds. */
+  const c = $("#sdNights"); c.innerHTML="";
+  nights.forEach(k=>{
+    const n = runs.filter(m=>runLabel(m)===k).length;
+    const on = k===sdNight;
+    const b = document.createElement("button");
+    b.type="button"; b.className="chip"+(on?" on":"");
+    b.setAttribute("aria-pressed", on?"true":"false");
+    b.textContent = `${k} (${n})`;
+    b.onclick=()=>{ sdNight=k; renderShowdown(); };
+    c.appendChild(b);
+  });
 }
 function sdCard(m){
-  const a = m.agentic, insts = a.per_instance||[];
+  const a = m.agentic, insts = a.per_instance||[], p = a.perf||{};
   const stat = (k,v)=>`<div class="vrow"><b>${k}</b><code>${v}</code></div>`;
   return `<div class="sd-card" title="${m.id}">
     <div class="sd-head">${pill(m.verdict)}<h3>${m.model.slug||m.id}</h3>
@@ -372,9 +437,24 @@ function sdCard(m){
       ${stat("resolved / GPU-h", fmt2(a.resolved_per_gpu_h))}
       ${stat("empty", a.empty)}
     </div>
+    <div class="sd-perf"><b>agent-phase perf</b><div class="sd-stats">
+      ${stat("decode med", p.decode_med==null?"not recorded":`${fmt1(p.decode_med)} tok/s`)}
+      ${stat("encode med", p.encode_med==null?"not recorded":`${fmt1(p.encode_med)} tok/s`)}
+      ${stat("cache hit", p.cache_pct==null?"not recorded":`${fmt1(p.cache_pct)}%`)}
+      ${stat("MTP acc", p.mtp_acc_pct==null?"not recorded":`${fmt1(p.mtp_acc_pct)}%`)}
+      ${stat("requests", fmt(p.requests))}
+      ${stat("longest out / cap", `${fmt(p.max_out)} / ${fmt(p.cap_tokens)}`)}
+      ${p.vram_gib==null?"":stat("VRAM", `${fmt1(p.vram_gib)} GiB`)}
+    </div></div>
+    ${sdWarn(p)}
     <div class="sd-grid">${insts.map(sdCell).join("")}</div>
     ${sdFoot(m)}
   </div>`;
+}
+function sdWarn(p){
+  /* a window that caught a non-200 did not run clean: say so on the card, not only in the data */
+  if(!p.errors) return "";
+  return `<div class="sd-warn">warning: ${p.errors} non-200 response${p.errors===1?"":"s"} inside the agent-phase window — the speed figures above sit next to a serving error</div>`;
 }
 function sdCell(p){
   const [cls,txt] = SDCELL[p.result]||["e",p.result||"unrecorded"];   // `txt` not `lab`: keeps the label-truncating lab() visible below
@@ -389,6 +469,76 @@ function sdFoot(m){
   const r = (m.rows||[]).find(x=>x.leg==="agent_phase");
   if(!r) return "";
   return `<div class="dim sd-foot">agent-phase telemetry: ${fmt1(r.pp)} encode · ${fmt1(r.tps)} decode tok/s — measured while the agent worked, not comparable to the tuning-leg charts</div>`;
+}
+
+/* ---------- models lane: agent-phase performance of the showdown rounds ----------
+   How fast the served build was while mini-swe-agent drove it, straight out of each manifest's
+   `agentic.perf` block — this function reads those fields and plots them, it derives nothing.
+   House rules hold: bars() only, one hue per round-model across all four charts, descending order.
+   A figure no round recorded gets a sentence, never an empty axis and never a zero. */
+function renderModelPerf(){
+  dropChart("#mDecode"); dropChart("#mPrefill"); SD_CHARTS.forEach(dropChart);
+  const runs = sdRuns();
+  const names = runs.map(pfLabel);
+  const window = m => { const p = perfOf(m);
+    return ` · ${fmt(p.requests)} requests · window ${p.phase_wall_s==null?"unrecorded":`${Math.round(p.phase_wall_s)} s`}`; };
+  pfChart("#pfDecode", "#pfDecodeNote", pfRows(runs,"decode_med"), "output tok/s",
+    (v,n,x)=>{ const p=perfOf(x.raw);
+      return `${fmt1(v)} decode tok/s (median) · mean ${fmt1(p.decode_avg)}${window(x.raw)}${pfProseTip(x.raw)}`; }, names);
+  pfChart("#pfEncode", "#pfEncodeNote", pfRows(runs,"encode_med"), "input tok/s",
+    (v,n,x)=>{ const p=perfOf(x.raw);
+      return `${fmt1(v)} encode tok/s (median) · mean ${fmt1(p.encode_avg)}${window(x.raw)}${pfProseTip(x.raw)}`; }, names);
+  pfChart("#pfCache", "#pfCacheNote", pfRows(runs,"cache_pct"), "cache hit %",
+    (v,n,x)=>{ const p=perfOf(x.raw);
+      return `${fmt1(v)}% of prompt tokens served from KV cache · ${fmt(p.in_tokens)} prompt tokens counted${pfProseTip(x.raw)}`; }, names);
+  pfChart("#pfMTP", "#pfMTPNote", pfRows(runs,"mtp_acc_pct"), "draft acceptance %",
+    (v,n,x)=>`${fmt1(v)}% of MTP draft tokens accepted`, names);
+  pfCap(runs);
+}
+function pfChart(id, noteSel, rows, yTitle, fmtTip, names){
+  const box = $(id).closest(".chart-box"), note = $(noteSel);
+  if(!rows.length){
+    dropChart(id); box.hidden = true;
+    note.hidden = false;
+    note.textContent = "No published round recorded this figure, so there is nothing to chart. It stays absent from the manifests rather than being filled in here.";
+    return;
+  }
+  box.hidden = false; note.hidden = true; note.textContent = "";
+  bars(id, rows, yTitle, fmtTip, names);
+}
+const PF_COUNTERS = [[4096,"n_out_gt4096"],[8192,"n_out_gt8192"]];
+function pfCap(runs){
+  /* A list, not a canvas: the point of this card is reading one round against one ceiling, and an
+     amber row is a round whose longest response landed exactly on its cap, a red one a round that
+     got past it (a counter counts against a cap only when its threshold is at or above that cap). */
+  let pinned=0, over=0, nCap=0, nMax=0;
+  const rows = runs.map(m=>{
+    const p = perfOf(m);
+    if(p.cap_tokens!=null) nCap++;
+    if(p.max_out!=null) nMax++;
+    const at = p.cap_tokens!=null && p.max_out!=null && p.max_out===p.cap_tokens;
+    const past = (p.cap_tokens!=null && PF_COUNTERS.some(([thr,k])=>thr>=p.cap_tokens && (p[k]||0)>0))
+              || (p.cap_tokens!=null && p.max_out!=null && p.max_out>p.cap_tokens);
+    if(at) pinned++;
+    if(past) over++;
+    const state = p.cap_tokens==null ? "cap unrecorded"
+      : p.max_out==null ? "longest response unrecorded"
+      : past ? "engine exceeded its cap"
+      : at ? "engine pinned at the cap" : "stopped short of the cap";
+    const cnt = PF_COUNTERS.map(([thr,k])=>`<span>responses &gt;${thr} <code>${fmt(p[k])}</code></span>`).join("");
+    return `<div class="caprow${at?" pinned":""}${past?" over":""}" title="${m.id}">
+      <b>${pfLabel(m)}</b><span>cap <code>${fmt(p.cap_tokens)}</code></span>
+      <span>longest response <code>${fmt(p.max_out)}</code></span>${cnt}
+      <span class="capstate">${state}</span></div>`;
+  }).join("");
+  let concl;
+  if(!nCap) concl = "Not one published round records the max_tokens it was configured with, so this checkout cannot answer the cap question at all.";
+  else if(!nMax) concl = `All ${nCap} rounds state the cap they ran under, and none of them records the longest response it produced, so the ceiling is on the table here while whether the engine reached it is not.`;
+  else if(over) concl = `${over} of ${nMax} rounds produced a response longer than the cap they were configured with, so that cap is a request setting the engine can walk past rather than a hard limit.`;
+  else if(pinned) concl = `${pinned} of ${nMax} rounds ended with their longest response exactly at the cap, so the engine was pinned there instead of finishing on its own.`;
+  else concl = `None of the ${nMax} rounds came anywhere near its cap, so those answers stopped short of the ceiling by themselves.`;
+  $("#pfCap").innerHTML = rows;
+  const note = $("#pfCapNote"); note.hidden = false; note.textContent = concl;
 }
 
 /* ---------- overview: cross-run aggregation ---------- */

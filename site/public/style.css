@@ -71,6 +71,11 @@ main{max-width:1180px;margin:0 auto;padding:10px 20px 40px}
 .sd-legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--dim);font-size:12px;margin-top:14px}
 .sd-legend .dot{vertical-align:middle}
 .sd-foot{font-size:11.5px;margin-top:9px}
+/* agent-phase perf block on a showdown card: labelled so it can't read as part of the score above */
+.sd-perf{margin-top:10px}
+.sd-perf>b{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+.sd-perf .sd-stats{margin-top:6px}
+.sd-warn{margin-top:9px;font-size:12px;color:var(--bad)}
 .up{color:var(--ok);font-weight:700}
 .down{color:var(--bad);font-weight:700}
 .note{font-size:12.5px;margin-top:10px}
@@ -82,6 +87,24 @@ main{max-width:1180px;margin:0 auto;padding:10px 20px 40px}
 .chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .chip.off{opacity:.35;text-decoration:line-through}
 .chip-btn{padding:6px 12px;border-radius:999px;border:1px dashed var(--line);background:none;color:var(--dim);cursor:pointer;font-size:12px}
+/* Models-lane submenu + showdown night chips: same chip look, but these are buttons, so they
+   stay reachable by keyboard (the leg chips above are colour keys, these switch what is on screen) */
+.model-sub{margin:8px 0 2px}
+button.chip{font:inherit;font-size:13px}
+.chip.on{color:#0b0f16;background:linear-gradient(90deg,var(--acc1),var(--acc2));border-color:transparent;font-weight:700}
+.chip:focus-visible,button.chip-btn:focus-visible{outline:2px solid var(--acc1);outline-offset:2px}
+/* cap-honesty list: a list, not a canvas — every row states the ceiling and what came out */
+.cap-list{display:grid;gap:7px}
+.caprow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;background:var(--card2);border:1px solid transparent;
+  border-radius:10px;padding:9px 14px;font-size:13px;overflow-wrap:anywhere}
+.caprow b{min-width:120px}
+.caprow span{color:var(--dim)}
+.caprow code{color:var(--tx);font-size:12.5px}
+.caprow .capstate{margin-left:auto;font-weight:700;color:var(--dim)}
+.caprow.pinned{border-color:rgba(255,176,32,.45)}
+.caprow.pinned .capstate{color:#ffb020}
+.caprow.over{border-color:rgba(255,93,93,.5)}
+.caprow.over .capstate{color:var(--bad)}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:12px}
 .card{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
   animation:rise .5s ease both}
@@ -129,6 +152,9 @@ footer a{color:var(--acc1);text-decoration:none}
   .grid{grid-template-columns:minmax(0,1fr);gap:12px}
   /* showdown cards stack: two columns of 10-instance grids get unreadable on a phone */
   .sd-cards{grid-template-columns:minmax(0,1fr);gap:10px}
+  .caprow{gap:8px}
+  .caprow b{min-width:0}
+  .caprow .capstate{margin-left:0}
   .sd-stats{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
   .chart-box{height:250px}
   .hero .big{font-size:14px}

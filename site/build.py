@@ -11,10 +11,11 @@ missing, so every run always has a populated significance chart.
 
 Model run: run.json (kind "model"), data/model_results.json. Rows are grouped
 into input-size cells with per-leg medians; warm-up legs feed tables only. An
-agentic showdown round passes its `agentic` outcome block through untouched, and
-its agent_phase row is raw-row only — agent-phase telemetry is a different
-measurement condition from a tuning leg, so it joins neither the input-size cells
-nor a model's tuning medians.
+agentic showdown round passes its `agentic` outcome block — including the
+`agentic.perf` agent-phase performance block — through untouched, and its
+agent_phase row is raw-row only: agent-phase telemetry is a different
+measurement condition from a tuning leg, so it joins neither the input-size
+cells nor a model's tuning medians.
 """
 
 from __future__ import annotations
@@ -175,7 +176,9 @@ def model_run(run_dir: Path, manifest: dict) -> dict | None:
     }
     agentic = manifest.get("agentic")
     if agentic:
-        # passed through verbatim: the tally is the eval's, not something to re-derive here
+        # passed through verbatim: the tally is the eval's and the agent-phase perf block is the
+        # capture's (schemas/modelrun.schema.json → agentic.perf) — neither is re-derived here, and
+        # a field the capture left unrecorded reaches the site as null rather than as a computed 0
         entry["agentic"] = agentic
     entry.update(
         {

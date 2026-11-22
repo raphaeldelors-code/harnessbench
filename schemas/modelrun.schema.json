@@ -43,6 +43,29 @@
         "partial_credit": {"type": ["number", "null"], "minimum": 0, "description": "sum of per-instance F2P fraction over the set (resolved 1.0, empty 0); null when this round was never re-scored"},
         "gpu_hours": {"type": ["number", "null"], "minimum": 0, "description": "agent-phase wall time in GPU hours, as the capture recorded it"},
         "resolved_per_gpu_h": {"type": ["number", "null"], "minimum": 0, "description": "resolved per GPU hour, as the capture recorded it"},
+        "perf": {
+          "type": "object",
+          "description": "Agent-phase performance of the round, recorded as the capture measured it and copied verbatim into the manifest — nothing here is re-derived from other fields. A property is null (or absent) when the capture did not record it: the 2026-11-10 final2 rounds have no activity dump, so only the RESULTS.md prose medians survive and the manifest notes say what they are not. Speed and request counts only — never a quality claim.",
+          "additionalProperties": false,
+          "properties": {
+            "requests": {"type": ["integer", "null"], "minimum": 0, "description": "completion requests answered inside the agent-phase window"},
+            "in_tokens": {"type": ["integer", "null"], "minimum": 0, "description": "prompt tokens counted over that window"},
+            "out_tokens": {"type": ["integer", "null"], "minimum": 0, "description": "generated tokens counted over that window"},
+            "encode_avg": {"type": ["number", "null"], "minimum": 0, "description": "mean prompt tok/s over the window's requests"},
+            "encode_med": {"type": ["number", "null"], "minimum": 0, "description": "median prompt tok/s over the window's requests"},
+            "decode_avg": {"type": ["number", "null"], "minimum": 0, "description": "mean generated tok/s over the window's requests"},
+            "decode_med": {"type": ["number", "null"], "minimum": 0, "description": "median generated tok/s over the window's requests"},
+            "cache_pct": {"type": ["number", "null"], "minimum": 0, "maximum": 100, "description": "KV-cache hit share of prompt tokens, percent"},
+            "mtp_acc_pct": {"type": ["number", "null"], "minimum": 0, "maximum": 100, "description": "MTP draft-token acceptance, percent; null when the build ran no MTP or reported none"},
+            "max_out": {"type": ["integer", "null"], "minimum": 0, "description": "longest single response in the window, output tokens — read it against cap_tokens"},
+            "n_out_gt4096": {"type": ["integer", "null"], "minimum": 0, "description": "responses longer than 4096 output tokens"},
+            "n_out_gt8192": {"type": ["integer", "null"], "minimum": 0, "description": "responses longer than 8192 output tokens"},
+            "errors": {"type": ["integer", "null"], "minimum": 0, "description": "non-200 responses inside the window; a clean window records 0, null when the window was never swept"},
+            "phase_wall_s": {"type": ["number", "null"], "minimum": 0, "description": "agent-phase window length in seconds, as the capture windowed it"},
+            "cap_tokens": {"type": ["integer", "null"], "minimum": 1, "description": "max_tokens the round was configured with — the ceiling max_out is read against"},
+            "vram_gib": {"type": ["number", "null"], "minimum": 0, "description": "VRAM the served build held on the rig, GiB; recorded only for the builds the comparison table measured"}
+          }
+        },
         "per_instance": {
           "type": "array",
           "minItems": 1,

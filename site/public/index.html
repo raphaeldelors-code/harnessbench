@@ -114,6 +114,10 @@
 
   <!-- ===== MODELS (model bench lane): engine/quantization tuning rounds ===== -->
   <section class="panel" id="sec-models" hidden>
+    <!-- lane submenu first: it decides which view below is open. The Models lane holds three
+         different questions (how fast is each served model, what did the showdown nights score,
+         how fast was the engine while an agent worked), and 21 round tabs would bury the choice. -->
+    <nav id="modelSub" class="chips model-sub" aria-label="Models lane views"></nav>
     <nav id="modelTabs" class="tabs run-tabs"></nav>
     <div id="modelBanner" class="banner" hidden></div>
 
@@ -141,6 +145,12 @@
     <!-- agentic showdown rounds: task quality on sb10, graded by the official SWE-bench eval.
          Its own tab because a showdown round answers a different question than a tuning leg. -->
     <div id="modelShowdown" hidden>
+      <!-- one bench night at a time for the round cards; the two bars above stay cross-night -->
+      <div class="filters">
+        <span class="filters-label">Bench nights</span>
+        <div id="sdNights" class="chips"></div>
+      </div>
+      <p class="dim note" id="sdNightNote" hidden></p>
       <div class="grid">
         <div class="card wide">
           <h2>Resolved / 10 by model-run <span class="sub">one bar per showdown round · mini-swe-agent on the 10 SWE-bench Verified instances, graded by the official eval · 3+ resolved = PASS</span></h2>
@@ -161,6 +171,42 @@
         <span class="dim">cell = instance, number = steps used · hover (or tap) a cell for the full instance id and its credit</span>
       </div>
       <div id="sdCards" class="sd-cards"></div>
+    </div>
+
+    <!-- agent-phase performance of the showdown rounds: how fast the served build was while
+         mini-swe-agent worked. Speed of the engine under agent traffic — not task quality, and
+         not comparable to the tuning-leg charts (different measurement condition). -->
+    <div id="modelPerf" hidden>
+      <div class="grid">
+        <div class="card wide">
+          <h2>Decode speed <span class="sub">median generated tok/s per round-model, over the round's agent-phase window</span></h2>
+          <div class="chart-box"><canvas id="pfDecode"></canvas></div>
+          <p class="dim note" id="pfDecodeNote" hidden></p>
+        </div>
+        <div class="card wide">
+          <h2>Prefill speed <span class="sub">median prompt tok/s per round-model</span></h2>
+          <div class="chart-box"><canvas id="pfEncode"></canvas></div>
+          <p class="dim note" id="pfEncodeNote" hidden></p>
+        </div>
+        <div class="card wide">
+          <h2>KV-cache hits <span class="sub">share of prompt tokens served from cache</span></h2>
+          <div class="chart-box"><canvas id="pfCache"></canvas></div>
+          <p class="dim note" id="pfCacheNote" hidden></p>
+        </div>
+        <div class="card wide">
+          <h2>MTP draft acceptance <span class="sub">share of multi-token-prediction draft tokens the engine kept</span></h2>
+          <div class="chart-box"><canvas id="pfMTP"></canvas></div>
+          <p class="dim note" id="pfMTPNote" hidden></p>
+        </div>
+        <div class="card wide">
+          <h2>Output cap honesty <span class="sub">the max_tokens each round was configured with, against the longest response it produced</span></h2>
+          <div id="pfCap" class="cap-list"></div>
+          <p class="dim note" id="pfCapNote" hidden></p>
+        </div>
+      </div>
+      <p class="dim note">Every number here is the round's own agent-phase capture, copied into the manifest without re-derivation
+        (<code>schemas/modelrun.schema.json</code> → <code>agentic.perf</code>); a blank is a field that capture did not record, not a zero.
+        These are speed readings of the engine while an agent drove it: they grade nothing about the patch an agent produced, and they are not comparable to the tuning-leg charts on a round page.</p>
     </div>
 
     <!-- one tuning round: legs compared inside each input-size cell -->

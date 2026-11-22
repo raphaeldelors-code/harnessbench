@@ -97,8 +97,38 @@ What `site/build.py` derives for this lane (both keys live next to `runs` in `si
 | `models[]` | per `model.slug`: `quant`/`family`/`engine`, `n_runs`, median decode `tps` and prefill `pp` over all non-warm rows of that model's rounds (`tps_range` gives spread), plus `verdicts[]` — one entry per round: id, date, verdict, that round's medians, row count and legs |
 
 Fields **not captured** for model runs today, and not to be back-filled by inference: the engine
-flags each leg changed (only the round title and verdict survive), GPU-side stats (VRAM, queue
-depth, TTFT), and any quality/task score for the quantization — this lane measures speed only.
+flags each leg changed (only the round title and verdict survive), GPU-side stats for the tuning
+rounds (VRAM, queue depth, TTFT), and any quality/task score for the quantization — the tuning
+rounds of this lane measure speed only.
+
+### Agentic showdown rounds (`agentic` block)
+
+Fifteen of the model runs are not tuning ladders: they ran mini-swe-agent once over the 10
+SWE-bench Verified instances on one served build and were graded by the official eval container.
+Their outcome tally lives in the optional `agentic` block of the manifest
+(`schemas/modelrun.schema.json`), and `site/build.py` copies that block — including its `perf`
+sub-object — into `site.json` verbatim, computing nothing.
+
+`agentic.perf` holds the agent-phase capture of the round: request count, token totals, prefill and
+decode speed (mean and median), KV-cache hit share, MTP draft acceptance, longest single response,
+over-length response counters, non-200 responses, window length, the `max_tokens` cap the round was
+configured with, and served VRAM where the comparison table measured it.
+
+What is populated in this checkout, and what is not:
+
+| field group | state | source |
+|---|---|---|
+| `cap_tokens` | every round | run4/run5/run6/run7 state it in their own notes (`max_tokens 4096` / `8192`); final2 states it in its write-up |
+| `vram_gib` | `strata_iq3s` 10.5, `strata_iq3_xxs` 15.5, `strata_ud_q3_k_xl` 22.3 | the run5 build comparison; every other build, `qwen3.8-27b` included, has no recorded figure and stays `null` |
+| `encode_med` / `decode_med` / `cache_pct` on the two final2 rounds | populated | the prose medians the round write-up quotes — not an agent-phase window statistic, and the site labels them as quoted figures (the final2 manifests' own notes already say why no speed row was recorded) |
+| everything else (`requests`, `in_tokens`, `out_tokens`, averages, `max_out`, the two over-length counters, `errors`, `phase_wall_s`, `mtp_acc_pct`) | `null` in all fifteen manifests | the run-level perf tables (`artifacts/agentswe/perf_tables.json`) are not present in this checkout — the read-only artifact drop is empty — and these numbers are not re-derived from other fields |
+
+`null` in this block means **the capture did not record it**, never zero, and never a value inferred
+from a neighbouring field. The same rule is why the existing `agent_phase` row of
+`data/model_results.json` is never mapped onto `encode_med`/`decode_med`: the published figures are
+not labelled as which of the two statistics they are, so copying them across would be a guess. The
+site renders each unrecorded field as "not recorded" and drops a performance chart to a plain
+sentence when no round recorded that figure at all.
 
 ## Gap analysis — unused harness fields worth leveraging
 
