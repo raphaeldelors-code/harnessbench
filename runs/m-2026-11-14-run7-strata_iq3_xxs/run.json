@@ -1,117 +1,117 @@
 {
-  "schema_version": "hb-modelrun-v1",
-  "id": "m-2026-11-14-run7-strata_iq3_xxs",
-  "kind": "model",
-  "date": "2026-11-14",
-  "title": "Agentic showdown round - run7, 40-step cap",
-  "model": {
-    "slug": "strata_iq3_xxs",
-    "quant": "not recorded in the run7 capture",
-    "family": "local"
+ "schema_version": "hb-modelrun-v1",
+ "id": "m-2026-11-14-run7-strata_iq3_xxs",
+ "kind": "model",
+ "date": "2026-11-14",
+ "title": "Agentic showdown round - run7, 40-step cap",
+ "model": {
+  "slug": "strata_iq3_xxs",
+  "quant": "not recorded in the run7 capture",
+  "family": "local"
+ },
+ "engine": "strata (llama.cpp fork) via llama-swap",
+ "verdict": "PASS",
+ "hardware": "bench-rig-01",
+ "notes": "provenance: agentswe run7 artifacts captured from bench-rig-01 (run7.log, RESULTS_partial7.md, logs/run7_strata_iq3_xxs/openai__strata_iq3_xxs report JSONs, activity7.jsonl + run7.log PHASE windows); mini-swe-agent via llama-swap :8080, T=0, 40-step cap, sb10 x10, max_tokens 8192. run7 tables print a mangled F2P pass column (credit 1.00 rows shown as '0/1'); credit column plus eval JSONs authoritative. This leg ran as run7b (BENCH7B, step_limit=40) after the first three. the run7 capture records only the served model id, so the quantization build is not recorded here; run7.log logs no per-model file path.",
+ "agentic": {
+  "steps_cap": 40,
+  "temperature": 0,
+  "n_instances": 10,
+  "resolved": 4,
+  "unresolved": 4,
+  "empty": 2,
+  "partial_credit": 4.0,
+  "gpu_hours": 0.76,
+  "resolved_per_gpu_h": 5.26,
+  "perf": {
+   "requests": 283,
+   "in_tokens": 4641369,
+   "out_tokens": 112939,
+   "encode_avg": 407.4,
+   "encode_med": 355.6,
+   "decode_avg": 92.0,
+   "decode_med": 90.8,
+   "cache_pct": 96.6,
+   "mtp_acc_pct": 74.9,
+   "max_out": 8192,
+   "n_out_gt4096": 1,
+   "n_out_gt8192": 0,
+   "errors": 0,
+   "phase_wall_s": 2574,
+   "cap_tokens": 8192,
+   "vram_gib": 15.5
   },
-  "engine": "strata (llama.cpp fork) via llama-swap",
-  "verdict": "PASS",
-  "hardware": "bench-rig-01",
-  "notes": "provenance: agentswe run7 artifacts captured from bench-rig-01 (run7.log, RESULTS_partial7.md, logs/run7_strata_iq3_xxs/openai__strata_iq3_xxs report JSONs, activity7.jsonl + run7.log PHASE windows); mini-swe-agent via llama-swap :8080, T=0, 40-step cap, sb10 x10, max_tokens 8192. run7 tables print a mangled F2P pass column (credit 1.00 rows shown as '0/1'); credit column plus eval JSONs authoritative. This leg ran as run7b (BENCH7B, step_limit=40) after the first three. the run7 capture records only the served model id, so the quantization build is not recorded here; run7.log logs no per-model file path.",
-  "agentic": {
-    "steps_cap": 40,
-    "temperature": 0,
-    "n_instances": 10,
-    "resolved": 4,
-    "unresolved": 4,
-    "empty": 2,
-    "partial_credit": 4.0,
-    "gpu_hours": 0.76,
-    "resolved_per_gpu_h": 5.26,
-    "perf": {
-      "requests": null,
-      "in_tokens": null,
-      "out_tokens": null,
-      "encode_avg": null,
-      "encode_med": null,
-      "decode_avg": null,
-      "decode_med": null,
-      "cache_pct": null,
-      "mtp_acc_pct": null,
-      "max_out": null,
-      "n_out_gt4096": null,
-      "n_out_gt8192": null,
-      "errors": null,
-      "phase_wall_s": null,
-      "cap_tokens": 8192,
-      "vram_gib": 15.5
-    },
-    "per_instance": [
-      {
-        "instance": "pallets__flask-5014",
-        "result": "resolved",
-        "steps": 29,
-        "credit": 1.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1142",
-        "result": "resolved",
-        "steps": 30,
-        "credit": 1.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1724",
-        "result": "unresolved",
-        "steps": 33,
-        "credit": 0.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1766",
-        "result": "unresolved",
-        "steps": 22,
-        "credit": 0.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1921",
-        "result": "unresolved",
-        "steps": 30,
-        "credit": 0.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-2317",
-        "result": "unresolved",
-        "steps": 25,
-        "credit": 0.0,
-        "patch": true
-      },
-      {
-        "instance": "pylint-dev__pylint-4551",
-        "result": "empty",
-        "steps": 40,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "pylint-dev__pylint-4604",
-        "result": "empty",
-        "steps": 40,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "pytest-dev__pytest-10051",
-        "result": "resolved",
-        "steps": 18,
-        "credit": 1.0,
-        "patch": true
-      },
-      {
-        "instance": "pytest-dev__pytest-10081",
-        "result": "resolved",
-        "steps": 15,
-        "credit": 1.0,
-        "patch": true
-      }
-    ]
-  }
+  "per_instance": [
+   {
+    "instance": "pallets__flask-5014",
+    "result": "resolved",
+    "steps": 29,
+    "credit": 1.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1142",
+    "result": "resolved",
+    "steps": 30,
+    "credit": 1.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1724",
+    "result": "unresolved",
+    "steps": 33,
+    "credit": 0.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1766",
+    "result": "unresolved",
+    "steps": 22,
+    "credit": 0.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1921",
+    "result": "unresolved",
+    "steps": 30,
+    "credit": 0.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-2317",
+    "result": "unresolved",
+    "steps": 25,
+    "credit": 0.0,
+    "patch": true
+   },
+   {
+    "instance": "pylint-dev__pylint-4551",
+    "result": "empty",
+    "steps": 40,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "pylint-dev__pylint-4604",
+    "result": "empty",
+    "steps": 40,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "pytest-dev__pytest-10051",
+    "result": "resolved",
+    "steps": 18,
+    "credit": 1.0,
+    "patch": true
+   },
+   {
+    "instance": "pytest-dev__pytest-10081",
+    "result": "resolved",
+    "steps": 15,
+    "credit": 1.0,
+    "patch": true
+   }
+  ]
+ }
 }

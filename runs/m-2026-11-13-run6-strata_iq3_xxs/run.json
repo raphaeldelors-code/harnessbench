@@ -1,117 +1,117 @@
 {
-  "schema_version": "hb-modelrun-v1",
-  "id": "m-2026-11-13-run6-strata_iq3_xxs",
-  "kind": "model",
-  "date": "2026-11-13",
-  "title": "Agentic showdown round - run6, 20-step cap",
-  "model": {
-    "slug": "strata_iq3_xxs",
-    "quant": "UD-IQ3_XXS v3.1 (Qwen Flash Next)",
-    "family": "local"
+ "schema_version": "hb-modelrun-v1",
+ "id": "m-2026-11-13-run6-strata_iq3_xxs",
+ "kind": "model",
+ "date": "2026-11-13",
+ "title": "Agentic showdown round - run6, 20-step cap",
+ "model": {
+  "slug": "strata_iq3_xxs",
+  "quant": "UD-IQ3_XXS v3.1 (Qwen Flash Next)",
+  "family": "local"
+ },
+ "engine": "strata (llama.cpp fork) via llama-swap",
+ "verdict": "PARTIAL",
+ "hardware": "bench-rig-01",
+ "notes": "provenance: agentswe run6 artifacts captured from bench-rig-01 (RESULTS_run6.md, RESULTS_partial.md, logs/run6_strata_iq3_xxs/openai__strata_iq3_xxs report JSONs, activity6.jsonl + run6.log PHASE windows); mini-swe-agent via llama-swap :8080, T=0, 20-step cap, sb10 x10, max_tokens 4096. the partial-credit table credits requests-2317 0.88 on a patch failing a single FAIL_TO_PASS test, so partial credit 1.88 sits above the 1 resolved -- tables are authoritative for per-instance credit, the eval JSONs for the resolved/unresolved/empty tally.",
+ "agentic": {
+  "steps_cap": 20,
+  "temperature": 0,
+  "n_instances": 10,
+  "resolved": 1,
+  "unresolved": 1,
+  "empty": 8,
+  "partial_credit": 1.88,
+  "gpu_hours": 0.5,
+  "resolved_per_gpu_h": 2.0,
+  "perf": {
+   "requests": 195,
+   "in_tokens": 2298463,
+   "out_tokens": 76920,
+   "encode_avg": 427.6,
+   "encode_med": 369.5,
+   "decode_avg": 90.7,
+   "decode_med": 90.2,
+   "cache_pct": 94.8,
+   "mtp_acc_pct": 74.0,
+   "max_out": 2077,
+   "n_out_gt4096": 0,
+   "n_out_gt8192": 0,
+   "errors": 0,
+   "phase_wall_s": 1794,
+   "cap_tokens": 4096,
+   "vram_gib": 15.5
   },
-  "engine": "strata (llama.cpp fork) via llama-swap",
-  "verdict": "PARTIAL",
-  "hardware": "bench-rig-01",
-  "notes": "provenance: agentswe run6 artifacts captured from bench-rig-01 (RESULTS_run6.md, RESULTS_partial.md, logs/run6_strata_iq3_xxs/openai__strata_iq3_xxs report JSONs, activity6.jsonl + run6.log PHASE windows); mini-swe-agent via llama-swap :8080, T=0, 20-step cap, sb10 x10, max_tokens 4096. the partial-credit table credits requests-2317 0.88 on a patch failing a single FAIL_TO_PASS test, so partial credit 1.88 sits above the 1 resolved -- tables are authoritative for per-instance credit, the eval JSONs for the resolved/unresolved/empty tally.",
-  "agentic": {
-    "steps_cap": 20,
-    "temperature": 0,
-    "n_instances": 10,
-    "resolved": 1,
-    "unresolved": 1,
-    "empty": 8,
-    "partial_credit": 1.88,
-    "gpu_hours": 0.5,
-    "resolved_per_gpu_h": 2.0,
-    "perf": {
-      "requests": null,
-      "in_tokens": null,
-      "out_tokens": null,
-      "encode_avg": null,
-      "encode_med": null,
-      "decode_avg": null,
-      "decode_med": null,
-      "cache_pct": null,
-      "mtp_acc_pct": null,
-      "max_out": null,
-      "n_out_gt4096": null,
-      "n_out_gt8192": null,
-      "errors": null,
-      "phase_wall_s": null,
-      "cap_tokens": 4096,
-      "vram_gib": 15.5
-    },
-    "per_instance": [
-      {
-        "instance": "pallets__flask-5014",
-        "result": "resolved",
-        "steps": 14,
-        "credit": 1.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1142",
-        "result": "empty",
-        "steps": 20,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "psf__requests-1724",
-        "result": "empty",
-        "steps": 20,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "psf__requests-1766",
-        "result": "empty",
-        "steps": 20,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "psf__requests-1921",
-        "result": "empty",
-        "steps": 20,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "psf__requests-2317",
-        "result": "unresolved",
-        "steps": 20,
-        "credit": 0.88,
-        "patch": true
-      },
-      {
-        "instance": "pylint-dev__pylint-4551",
-        "result": "empty",
-        "steps": 20,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "pylint-dev__pylint-4604",
-        "result": "empty",
-        "steps": 20,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "pytest-dev__pytest-10051",
-        "result": "empty",
-        "steps": 20,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "pytest-dev__pytest-10081",
-        "result": "empty",
-        "steps": 20,
-        "credit": 0.0,
-        "patch": false
-      }
-    ]
-  }
+  "per_instance": [
+   {
+    "instance": "pallets__flask-5014",
+    "result": "resolved",
+    "steps": 14,
+    "credit": 1.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1142",
+    "result": "empty",
+    "steps": 20,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "psf__requests-1724",
+    "result": "empty",
+    "steps": 20,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "psf__requests-1766",
+    "result": "empty",
+    "steps": 20,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "psf__requests-1921",
+    "result": "empty",
+    "steps": 20,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "psf__requests-2317",
+    "result": "unresolved",
+    "steps": 20,
+    "credit": 0.88,
+    "patch": true
+   },
+   {
+    "instance": "pylint-dev__pylint-4551",
+    "result": "empty",
+    "steps": 20,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "pylint-dev__pylint-4604",
+    "result": "empty",
+    "steps": 20,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "pytest-dev__pytest-10051",
+    "result": "empty",
+    "steps": 20,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "pytest-dev__pytest-10081",
+    "result": "empty",
+    "steps": 20,
+    "credit": 0.0,
+    "patch": false
+   }
+  ]
+ }
 }

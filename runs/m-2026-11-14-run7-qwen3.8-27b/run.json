@@ -1,117 +1,117 @@
 {
-  "schema_version": "hb-modelrun-v1",
-  "id": "m-2026-11-14-run7-qwen3.8-27b",
-  "kind": "model",
-  "date": "2026-11-14",
-  "title": "Agentic showdown round - run7, 40-step cap",
-  "model": {
-    "slug": "qwen3.8-27b",
-    "quant": "not recorded in the run7 capture",
-    "family": "local"
+ "schema_version": "hb-modelrun-v1",
+ "id": "m-2026-11-14-run7-qwen3.8-27b",
+ "kind": "model",
+ "date": "2026-11-14",
+ "title": "Agentic showdown round - run7, 40-step cap",
+ "model": {
+  "slug": "qwen3.8-27b",
+  "quant": "not recorded in the run7 capture",
+  "family": "local"
+ },
+ "engine": "llama.cpp via llama-swap",
+ "verdict": "PASS",
+ "hardware": "bench-rig-01",
+ "notes": "provenance: agentswe run7 artifacts captured from bench-rig-01 (run7.log, RESULTS_partial7.md, logs/run7_qwen3.8-27b/openai__qwen3.8-27b report JSONs, activity7.jsonl + run7.log PHASE windows); mini-swe-agent via llama-swap :8080, T=0, 40-step cap, sb10 x10, max_tokens 8192. run7 tables print a mangled F2P pass column (credit 1.00 rows shown as '0/1', '0/6', '0/8'); credit column plus eval JSONs authoritative. The served slug qwen3.8-27b covers unsloth Q5_K_S on 2026-11-10 and UD-Q5_K_S v3.0 in run4; run7 names only the served id, so the build is not recorded.",
+ "agentic": {
+  "steps_cap": 40,
+  "temperature": 0,
+  "n_instances": 10,
+  "resolved": 4,
+  "unresolved": 4,
+  "empty": 2,
+  "partial_credit": 4.0,
+  "gpu_hours": 0.47,
+  "resolved_per_gpu_h": 8.51,
+  "perf": {
+   "requests": 208,
+   "in_tokens": 1917991,
+   "out_tokens": 61344,
+   "encode_avg": 550.9,
+   "encode_med": 501.0,
+   "decode_avg": 74.8,
+   "decode_med": 74.8,
+   "cache_pct": 93.8,
+   "mtp_acc_pct": 82.2,
+   "max_out": 8192,
+   "n_out_gt4096": 1,
+   "n_out_gt8192": 0,
+   "errors": 0,
+   "phase_wall_s": 1707,
+   "cap_tokens": 8192,
+   "vram_gib": null
   },
-  "engine": "llama.cpp via llama-swap",
-  "verdict": "PASS",
-  "hardware": "bench-rig-01",
-  "notes": "provenance: agentswe run7 artifacts captured from bench-rig-01 (run7.log, RESULTS_partial7.md, logs/run7_qwen3.8-27b/openai__qwen3.8-27b report JSONs, activity7.jsonl + run7.log PHASE windows); mini-swe-agent via llama-swap :8080, T=0, 40-step cap, sb10 x10, max_tokens 8192. run7 tables print a mangled F2P pass column (credit 1.00 rows shown as '0/1', '0/6', '0/8'); credit column plus eval JSONs authoritative. The served slug qwen3.8-27b covers unsloth Q5_K_S on 2026-11-10 and UD-Q5_K_S v3.0 in run4; run7 names only the served id, so the build is not recorded.",
-  "agentic": {
-    "steps_cap": 40,
-    "temperature": 0,
-    "n_instances": 10,
-    "resolved": 4,
-    "unresolved": 4,
-    "empty": 2,
-    "partial_credit": 4.0,
-    "gpu_hours": 0.47,
-    "resolved_per_gpu_h": 8.51,
-    "perf": {
-      "requests": null,
-      "in_tokens": null,
-      "out_tokens": null,
-      "encode_avg": null,
-      "encode_med": null,
-      "decode_avg": null,
-      "decode_med": null,
-      "cache_pct": null,
-      "mtp_acc_pct": null,
-      "max_out": null,
-      "n_out_gt4096": null,
-      "n_out_gt8192": null,
-      "errors": null,
-      "phase_wall_s": null,
-      "cap_tokens": 8192,
-      "vram_gib": null
-    },
-    "per_instance": [
-      {
-        "instance": "pallets__flask-5014",
-        "result": "resolved",
-        "steps": 11,
-        "credit": 1.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1142",
-        "result": "resolved",
-        "steps": 13,
-        "credit": 1.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1724",
-        "result": "unresolved",
-        "steps": 13,
-        "credit": 0.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1766",
-        "result": "unresolved",
-        "steps": 19,
-        "credit": 0.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-1921",
-        "result": "unresolved",
-        "steps": 13,
-        "credit": 0.0,
-        "patch": true
-      },
-      {
-        "instance": "psf__requests-2317",
-        "result": "unresolved",
-        "steps": 21,
-        "credit": 0.0,
-        "patch": true
-      },
-      {
-        "instance": "pylint-dev__pylint-4551",
-        "result": "empty",
-        "steps": 40,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "pylint-dev__pylint-4604",
-        "result": "empty",
-        "steps": 40,
-        "credit": 0.0,
-        "patch": false
-      },
-      {
-        "instance": "pytest-dev__pytest-10051",
-        "result": "resolved",
-        "steps": 16,
-        "credit": 1.0,
-        "patch": true
-      },
-      {
-        "instance": "pytest-dev__pytest-10081",
-        "result": "resolved",
-        "steps": 21,
-        "credit": 1.0,
-        "patch": true
-      }
-    ]
-  }
+  "per_instance": [
+   {
+    "instance": "pallets__flask-5014",
+    "result": "resolved",
+    "steps": 11,
+    "credit": 1.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1142",
+    "result": "resolved",
+    "steps": 13,
+    "credit": 1.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1724",
+    "result": "unresolved",
+    "steps": 13,
+    "credit": 0.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1766",
+    "result": "unresolved",
+    "steps": 19,
+    "credit": 0.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-1921",
+    "result": "unresolved",
+    "steps": 13,
+    "credit": 0.0,
+    "patch": true
+   },
+   {
+    "instance": "psf__requests-2317",
+    "result": "unresolved",
+    "steps": 21,
+    "credit": 0.0,
+    "patch": true
+   },
+   {
+    "instance": "pylint-dev__pylint-4551",
+    "result": "empty",
+    "steps": 40,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "pylint-dev__pylint-4604",
+    "result": "empty",
+    "steps": 40,
+    "credit": 0.0,
+    "patch": false
+   },
+   {
+    "instance": "pytest-dev__pytest-10051",
+    "result": "resolved",
+    "steps": 16,
+    "credit": 1.0,
+    "patch": true
+   },
+   {
+    "instance": "pytest-dev__pytest-10081",
+    "result": "resolved",
+    "steps": 21,
+    "credit": 1.0,
+    "patch": true
+   }
+  ]
+ }
 }
