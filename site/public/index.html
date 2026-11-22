@@ -118,6 +118,9 @@
          different questions (how fast is each served model, what did the showdown nights score,
          how fast was the engine while an agent worked), and 21 round tabs would bury the choice. -->
     <nav id="modelSub" class="chips model-sub" aria-label="Models lane views"></nav>
+    <!-- the engine-dump intro sits below the submenu (F1) and collapsed: six engine names are a
+         footnote to the lane, not a headline that pushes the first chart off a phone screen -->
+    <div id="modelIntro"></div>
     <nav id="modelTabs" class="tabs run-tabs"></nav>
     <div id="modelBanner" class="banner" hidden></div>
 
@@ -200,7 +203,7 @@
         </div>
         <div class="card wide">
           <h2>Output cap honesty <span class="sub">the max_tokens each round was configured with, against the longest response it produced</span></h2>
-          <div id="pfCap" class="cap-list"></div>
+          <div class="chart-box"><canvas id="pfCap"></canvas></div>
           <p class="dim note" id="pfCapNote" hidden></p>
         </div>
       </div>

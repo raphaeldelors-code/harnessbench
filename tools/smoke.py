@@ -42,6 +42,7 @@ CANVASES = {
         "#pfEncode",
         "#pfCache",
         "#pfMTP",
+        "#pfCap",
     ],
 }
 
@@ -180,10 +181,10 @@ def check_page(page, label: str) -> list[str]:
                     if page.evaluate("location.hash") != "#models":
                         errors.append(f"{label}/{where}: night chip navigated instead of re-rendering")
                 else:
-                    for sel in ("#pfCap", "#pfCapNote"):
-                        if not page.query_selector(sel).inner_text().strip():
-                            errors.append(f"{label}/{where}: {sel} empty")
-                    for cid in ("#pfDecode", "#pfEncode", "#pfCache", "#pfMTP"):
+                    # the cap chart draws (F5), and its one caption line states the verdict in words
+                    if not page.query_selector("#pfCapNote").inner_text().strip():
+                        errors.append(f"{label}/{where}: #pfCapNote has no cap-honesty caption")
+                    for cid in ("#pfDecode", "#pfEncode", "#pfCache", "#pfMTP", "#pfCap"):
                         el = page.query_selector(cid)
                         if el is None:
                             errors.append(f"{label}/{where}: missing {cid}")

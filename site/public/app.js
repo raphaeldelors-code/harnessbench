@@ -3,6 +3,26 @@
    tuning rounds of the served model). One router, one chart house style, one data file. */
 const PALETTE = ["#4cc9f0","#b57bff","#3ddc84","#ffb020","#ff5d8f","#57d0ff","#9d7bff",
                  "#6fe3a0","#ffd166","#ff8fa3","#8fd3ff"];
+/* One hue per served model, for the whole Models lane: a curated 8-hue palette keyed on the
+   normalized slug, not a cycle keyed on bar index — PALETTE repaints a model whenever the bars
+   reorder, which is how the same engine came to read as three different colors down one page.
+   The iq4 tuning rounds are settings of one served model rather than different models, so they
+   share one neutral steel-blue and are told apart by their label only. Harness lane keeps PALETTE. */
+const MODEL_COLORS = {
+  "qwen3.8-27b":             "#ffb020",   // amber
+  "qwen3.8-27b-ud-q5-dyn31": "#ff7d54",   // coral
+  "strata_iq3s":             "#4cc9f0",   // cyan
+  "strata_iq3_xxs":          "#3ddc84",   // green
+  "strata_iq4_xs":           "#b57bff",   // violet
+  "strata_ud_q3_k_xl":       "#ff5d8f",   // rose
+  "_tuning":                 "#7f96b4",   // the iq4b…iq4g tuning family
+  "_other":                  "#2ee6c8",   // a served model this palette has not met yet
+};
+const normName = n => String(n||"").trim().toLowerCase();
+const modelColor = name => MODEL_COLORS[normName(name)] || MODEL_COLORS._other;
+const slugOf = m => (m&&m.model||{}).slug || (m&&m.id) || "";
+/* an agentic round is a claim about its served model, a tuning round about one engine setting */
+const roundColor = m => m.agentic ? modelColor(slugOf(m)) : MODEL_COLORS._tuning;
 /* R/E/T/U outcome hues — one source of truth: instance-grid cells (drawGrid, translucent alphas)
    and the failure-mix stacked bars (same rgb, alpha 1). Letters order = bottom→top stack order. */
 const OKEYS = ["R","E","T","U"];
@@ -107,7 +127,12 @@ function renderChips(){
   $("#chipAll").onclick=()=>{ hidden.clear(); renderRun(); };
 }
 function renderHero(){
-  if(lane==="models") return renderModelHero();
+  /* The Models lane carries its own collapsed intro under its submenu (F1), so the hero block —
+     which sits above every lane panel — stands down there. The CSS variable is the submenu's
+     sticky offset: the header height is what it is, so measure it instead of guessing 56px. */
+  document.documentElement.style.setProperty("--head", $("header").offsetHeight+"px");
+  $("#hero").hidden = lane==="models";
+  if(lane==="models") return renderModelIntro();
   const cross = crossRun();
   const hs=Object.entries(cross.harnesses).map(([h,x])=>({h,v:x.pct})).sort((a,b)=>b.v-a.v);
   const nRuns=DATA.runs.length, nH=hs.length;
@@ -127,14 +152,13 @@ function renderHero(){
 const VGOOD = ["KEEP","CONFIRM-KEEP","PASS"], VBAD = ["UNDO","REVERT"], VPART = ["PARTIAL"];
 const vclass = v => VGOOD.includes(v) ? "keep" : (VBAD.includes(v) ? "undo"
   : (VPART.includes(v) ? "partial" : "info"));      // PASS/PARTIAL grade a showdown score, no tuning verdict is in those lists
-const vdot = v => ({keep:"#3ddc84", undo:"#ff5d5d", partial:"#ffb020", info:"#8a94a8"})[vclass(v)];
 const pill = v => `<span class="pill ${vclass(v)}">${v}</span>`;
 const isWarm = leg => leg.startsWith("warm");
 const mrun = () => (DATA.model_runs||[])[modelIdx];
 const shortId = id => id.replace(/^m-\d{4}-\d{2}-\d{2}-/,"");
 const sdRuns = () => (DATA.model_runs||[]).filter(m=>m.agentic);
 const SD_CHARTS = ["#sdResolved","#sdEff"];
-const PF_CHARTS = ["#pfDecode","#pfEncode","#pfCache","#pfMTP"];
+const PF_CHARTS = ["#pfDecode","#pfEncode","#pfCache","#pfMTP","#pfCap"];
 /* the artifact round a showdown card belongs to: id minus its date prefix and its model-slug
    suffix ("m-2026-11-14-run7-strata_iq3s" → "run7"); falls back to the whole short id */
 const runLabel = m => { const s = shortId(m.id), slug = (m.model||{}).slug||"";
@@ -154,7 +178,7 @@ const pfLabel = m => { const slug = (m.model||{}).slug||"";
   return [runLabel(m), slug.replace(/^strata_/,"")].filter(Boolean).join(" "); };
 function pfRows(runs, key){
   return runs.filter(m=>perfOf(m)[key]!=null)
-    .map(m=>({label:pfLabel(m), name:pfLabel(m), v:perfOf(m)[key], raw:m}))
+    .map(m=>({label:pfLabel(m), name:pfLabel(m), model:slugOf(m), v:perfOf(m)[key], raw:m}))
     .sort((a,b)=>(b.v-a.v) || a.label.localeCompare(b.label));      // house style: descending value
 }
 /* No request count means the round was never swept as a window, so its medians are the round
@@ -169,11 +193,15 @@ function medianOf(vs){
 }
 function medOf(m, leg, key){ return medianOf(m.cells.map(c=>c.legs[leg] ? c.legs[leg][key] : null)); }
 
-function renderModelHero(){
+function renderModelIntro(){
+  /* The engine dump, collapsed (F1): it used to open the lane with four numbers nobody asked for
+     and push the actual view one screen down. Everything in it is stated again by the charts and
+     cards below, so the lane opens with one line naming the rig and the summary holds the rest. */
   const mrs = DATA.model_runs||[], models = DATA.models||[];
   const nRows = mrs.reduce((a,m)=>a+m.n_rows,0), nWarm = mrs.reduce((a,m)=>a+m.n_warm,0);
   const nSd = mrs.filter(m=>m.agentic).length, nTune = mrs.length-nSd;
   const gpu = (DATA.hardware||{}).gpu?.model || "local GPU";
+  const gpuShort = gpu.replace(/^NVIDIA GeForce /,"") || gpu;    // one RTX 3090, not a vendor string
   const rigs = [...new Set(mrs.map(m=>m.hardware).filter(Boolean))].join(", ")||"bench-rig-01";
   const served = models.map(m=>`${m.slug}${m.quant?" · "+m.quant:""}`).join(", ");
   const tune = mrs.filter(m=>!m.agentic);
@@ -182,12 +210,15 @@ function renderModelHero(){
   const nPass = sd.filter(m=>vclass(m.verdict)==="keep").length;     // PASS grade = 3+ resolved
   const scored = models.filter(m=>m.best_resolved!=null).sort((a,b)=>b.best_resolved-a.best_resolved);
   const best = scored[0];
-  $("#hero").innerHTML=`<div class="big">${nTune} tuning rounds · ${nSd} agentic showdown rounds · ${nRows} captured rows (${nWarm} warm-up, table only) · ${models.length} served model${models.length===1?"":"s"}
+  const box = $("#modelIntro"); box.hidden = false;
+  box.innerHTML = `<details class="lane-intro">
+    <summary>${models.length} engine${models.length===1?"":"s"} on one ${gpuShort} · details</summary>
+    <div class="big">${nTune} tuning rounds · ${nSd} agentic showdown rounds · ${nRows} captured rows (${nWarm} warm-up, table only) · ${models.length} served model${models.length===1?"":"s"}
     <b>${served||"—"}</b> on a single ${gpu} <span class="dim">(${rigs})</span></div>
     <div class="champ"><span class="medal">⚙</span>${tune.map(m=>`<span class="pill ${vclass(m.verdict)}">${m.verdict}</span>`).join(" ")}
     <span class="dim">tuning rounds are speed only — no task-quality claim</span>${nKeep?` · <b>${nKeep}</b> kept`:``}</div>
     ${nSd?`<div class="champ"><span class="medal">⚔</span>showdown best: <b>${best.slug}</b> <b>${(best.best_resolved*100).toFixed(0)}%</b> resolved
-      <span class="dim">(${scored.length} served model${scored.length===1?"":"s"} scored over ${nSd} rounds, <b>${nPass}</b> at 3+ resolved — Showdown tab)</span></div>`:""}`;
+      <span class="dim">(${scored.length} served model${scored.length===1?"":"s"} scored over ${nSd} rounds, <b>${nPass}</b> at 3+ resolved — Showdown tab)</span></div>`:""}</details>`;
 }
 function renderModels(){
   const mrs = DATA.model_runs||[];
@@ -195,7 +226,11 @@ function renderModels(){
   /* the showdown and performance views are both about agentic rounds — without any, they have
      nothing to show, so the lane falls back to its tuning overview */
   if((modelView==="showdown" || modelView==="perf") && !mrs.some(m=>m.agentic)) modelView = "overview";
-  renderModelTabs(); renderModelSub();
+  renderModelSub();
+  /* The round picker is part of the overview (F4): the showdown and performance views bring their
+     own filters, and a 21-chip row above them was the first thing on every lane view. */
+  $("#modelTabs").hidden = !(modelView==="overview" || modelView==="run");
+  renderModelPicker();
   const inRun = modelView==="run" && mrs.length>0;
   $("#modelBanner").hidden = !inRun;
   $("#modelOverview").hidden = modelView!=="overview";
@@ -223,18 +258,57 @@ function renderModelSub(){
     c.appendChild(b);
   });
 }
-function renderModelTabs(){
-  /* pseudo-run tabs, exactly like #runTabs: buttons switch state, no hash churn. The row lists the
-     rounds only — which of the lane's three views is open belongs to the submenu above it, so the
-     tabs no longer carry an overview/showdown pair that would fight it for the same state. */
-  const t = $("#modelTabs"); t.innerHTML="";
-  const mk=(label,on,fn,dot)=>{
-    const b=document.createElement("button"); b.className="tab"+(on?" on":"");
-    b.innerHTML=(dot?`<i class="dot" style="background:${dot}"></i>`:"")+label;
-    b.onclick=fn; t.appendChild(b);
-  };
-  (DATA.model_runs||[]).forEach((m,i)=>mk(shortId(m.id), modelView==="run"&&i===modelIdx,
-    ()=>{ modelIdx=i; modelView="run"; hiddenLegs.clear(); render(); }, vdot(m.verdict)));
+/* Chip text (F4): the served model with its "strata_" prefix dropped and the qwen builds
+   abbreviated, because a chip has to stay scannable at phone width. The full round id, quant and
+   verdict move to the title attribute; the dot is the model's own hue (F3), not its verdict. */
+const chipName = m => {
+  const s = slugOf(m);
+  if(s==="qwen3.8-27b") return "qwen";
+  if(s.startsWith("qwen3.8-27b-")) return "qwen "+s.slice("qwen3.8-27b-".length).replace(/^ud-/,"");
+  return s.replace(/^strata_/,"");
+};
+function roundChip(m, i, label, dot){
+  const b = document.createElement("button");
+  b.type="button"; b.className="chip"+(modelView==="run"&&i===modelIdx?" on":"");
+  b.innerHTML = `<i style="background:${dot}"></i>${label}`;
+  b.title = `${m.id} · ${(m.model||{}).quant||"quant unrecorded"} · ${m.date} · ${m.verdict}`;
+  b.onclick = ()=>{ modelIdx=i; modelView="run"; hiddenLegs.clear(); render(); };
+  return b;
+}
+function renderModelPicker(){
+  /* The lane used to open with 21 near-identical tabs: a scroll, not a choice. Grouped instead —
+     the showdown rounds one row per bench night, the tuning ladder folded away until asked. */
+  const t = $("#modelTabs"); t.innerHTML = "";
+  const mrs = DATA.model_runs||[], ids = new Map(mrs.map((m,i)=>[m,i]));
+  const runs = sdRuns();
+  if(runs.length){
+    const head = document.createElement("div"); head.className="pk-head";
+    head.innerHTML = `Agentic showdown <span class="dim">${runs.length} rounds · ${sdNights(runs).length} bench nights, newest first</span>`;
+    t.appendChild(head);
+    sdNights(runs).forEach(k=>{
+      const row = document.createElement("div"); row.className="pk-row";
+      row.innerHTML = `<b class="pk-night">${k}</b>`;
+      const c = document.createElement("div"); c.className="chips";
+      runs.filter(m=>runLabel(m)===k).forEach(m=>c.appendChild(roundChip(m, ids.get(m), chipName(m), roundColor(m))));
+      row.appendChild(c); t.appendChild(row);
+    });
+  }
+  const tune = mrs.filter(m=>!m.agentic);
+  if(tune.length){
+    /* One served model in six engine settings, so the group is labelled by that family and every
+       chip carries the same steel blue: here the label is the difference, not the colour. */
+    const slug = slugOf(tune[0]).replace(/^strata_/,"");
+    const fam = (slug.match(/^[a-z]+\d+/)||[slug||"tuning"])[0];
+    const d = document.createElement("details"); d.className="pk-tune";
+    d.innerHTML = `<summary>${fam} tuning (${tune.length})</summary>`;
+    const c = document.createElement("div"); c.className="chips";
+    tune.forEach(m=>c.appendChild(roundChip(m, ids.get(m), shortId(m.id), MODEL_COLORS._tuning)));
+    d.appendChild(c); t.appendChild(d);
+  }
+  /* F6: a caption in words, so nothing below is legible only to someone who already knows the hues */
+  const leg = document.createElement("p"); leg.className="dim pk-legend";
+  leg.innerHTML = `A chip dot, a chart bar and a card border in the same hue are the same engine, on every chart of this lane · the tuning rounds are settings of one served model and share one steel blue, told apart by their label only · verdicts are spelled out as pills: <span class="pill keep">keep</span> <span class="pill undo">revert</span> <span class="pill partial">partial</span> <span class="pill info">info</span>`;
+  t.appendChild(leg);
 }
 function renderModelRun(m){
   const c = vclass(m.verdict);
@@ -342,12 +416,14 @@ function renderModelOverview(){
   // house style: every bar chart sorts by its own descending value — build.py's models[] is
   // sorted by decode, which is a different order for the prefill chart, so sort per metric here
   const rowsFor = key => models.filter(m=>m[key]!=null)
-    .map(m=>({label:m.slug,name:m.slug,v:m[key],raw:m})).sort((a,b)=>b.v-a.v);
+    .map(m=>({label:m.slug,name:m.slug,model:m.slug,v:m[key],raw:m})).sort((a,b)=>b.v-a.v);
   bars("#mModelTps", rowsFor("tps"),
     "output tok/s", (v,n,x)=>`${v.toFixed(1)} median output tok/s · ${x.raw.n_runs} round${x.raw.n_runs>1?"s":""}`+
-      (x.raw.tps_range?` · spread ${fmt1(x.raw.tps_range[0])}–${fmt1(x.raw.tps_range[1])}`:""), names);
+      (x.raw.tps_range?` · spread ${fmt1(x.raw.tps_range[0])}–${fmt1(x.raw.tps_range[1])}`:""),
+      names, {mcolors:true, fullLabels:true});
   bars("#mModelPp", rowsFor("pp"),
-    "input tok/s", (v,n,x)=>`${v.toFixed(1)} median input tok/s · ${x.raw.n_runs} round${x.raw.n_runs>1?"s":""}`, names);
+    "input tok/s", (v,n,x)=>`${v.toFixed(1)} median input tok/s · ${x.raw.n_runs} round${x.raw.n_runs>1?"s":""}`,
+    names, {mcolors:true, fullLabels:true});
   modelVerdicts(models);
 }
 function modelVerdicts(models){
@@ -391,20 +467,21 @@ function renderShowdown(){
   note.hidden = nights.length<2;
   note.textContent = nights.length<2 ? ""
     : `Cards below are the ${named.length} ${sdNight} rounds of ${runs.length} in total. The two bars above score every bench night together, so they do not move when the chip changes.`;
-  const names = runs.map(m=>shortId(m.id));     // one PALETTE hue per round, like every bars() caller
+  /* A scoreboard row is a night × a served model, so the label is that pair ("run7 iq3s") and the
+     hue is the model's — across 15 rounds the night is what repeats, and the model is what to look for. */
   const desc = (a,b) => (b.v-a.v) || a.label.localeCompare(b.label);
-  const rows = runs.map(m=>({label:shortId(m.id), name:shortId(m.id), v:m.agentic.resolved, raw:m}));
+  const rows = runs.map(m=>({label:pfLabel(m), name:shortId(m.id), model:slugOf(m), v:m.agentic.resolved, raw:m}));
   bars("#sdResolved", rows.slice().sort(desc), "resolved instances",
     (v,n,x)=>{ const a=x.raw.agentic;
       return `${v} of ${a.n_instances} resolved · ${x.raw.date}` +
         (a.partial_credit!=null?` · partial credit ${fmt2(a.partial_credit)}`:"") +
-        (a.steps_cap?` · ${a.steps_cap}-step cap`:""); }, names);
+        (a.steps_cap?` · ${a.steps_cap}-step cap`:""); }, null, {mcolors:true});
   const eff = runs.filter(m=>m.agentic.resolved_per_gpu_h!=null)
-                  .map(m=>({label:shortId(m.id), name:shortId(m.id), v:m.agentic.resolved_per_gpu_h, raw:m}))
+                  .map(m=>({label:pfLabel(m), name:shortId(m.id), model:slugOf(m), v:m.agentic.resolved_per_gpu_h, raw:m}))
                   .sort(desc);
   $("#sdEffCard").hidden = !eff.length;
   bars("#sdEff", eff, "resolved / GPU-hour",
-    (v,n,x)=>`${v.toFixed(2)} resolved / GPU-h · ${x.raw.agentic.resolved} resolved in ${fmt2(x.raw.agentic.gpu_hours)} GPU-h`, names);
+    (v,n,x)=>`${v.toFixed(2)} resolved / GPU-h · ${x.raw.agentic.resolved} resolved in ${fmt2(x.raw.agentic.gpu_hours)} GPU-h`, null, {mcolors:true});
   $("#sdCards").innerHTML = named.map(sdCard).join("");
 }
 function renderSdNights(runs, nights){
@@ -425,7 +502,7 @@ function renderSdNights(runs, nights){
 function sdCard(m){
   const a = m.agentic, insts = a.per_instance||[], p = a.perf||{};
   const stat = (k,v)=>`<div class="vrow"><b>${k}</b><code>${v}</code></div>`;
-  return `<div class="sd-card" title="${m.id}">
+  return `<div class="sd-card" title="${m.id}" style="--mc:${modelColor(slugOf(m))}">
     <div class="sd-head">${pill(m.verdict)}<h3>${m.model.slug||m.id}</h3>
       <span class="dim">${runLabel(m)}</span></div>
     <div class="sd-meta">${m.date} · ${m.hardware} · ${a.steps_cap==null?"step cap unrecorded":`${a.steps_cap}-step cap`}
@@ -479,23 +556,23 @@ function sdFoot(m){
 function renderModelPerf(){
   dropChart("#mDecode"); dropChart("#mPrefill"); SD_CHARTS.forEach(dropChart);
   const runs = sdRuns();
-  const names = runs.map(pfLabel);
   const window = m => { const p = perfOf(m);
     return ` · ${fmt(p.requests)} requests · window ${p.phase_wall_s==null?"unrecorded":`${Math.round(p.phase_wall_s)} s`}`; };
+  const opt = {mcolors:true};      // one hue per round-model across all four charts, and across the showdown view
   pfChart("#pfDecode", "#pfDecodeNote", pfRows(runs,"decode_med"), "output tok/s",
     (v,n,x)=>{ const p=perfOf(x.raw);
-      return `${fmt1(v)} decode tok/s (median) · mean ${fmt1(p.decode_avg)}${window(x.raw)}${pfProseTip(x.raw)}`; }, names);
+      return `${fmt1(v)} decode tok/s (median) · mean ${fmt1(p.decode_avg)}${window(x.raw)}${pfProseTip(x.raw)}`; }, null, opt);
   pfChart("#pfEncode", "#pfEncodeNote", pfRows(runs,"encode_med"), "input tok/s",
     (v,n,x)=>{ const p=perfOf(x.raw);
-      return `${fmt1(v)} encode tok/s (median) · mean ${fmt1(p.encode_avg)}${window(x.raw)}${pfProseTip(x.raw)}`; }, names);
+      return `${fmt1(v)} encode tok/s (median) · mean ${fmt1(p.encode_avg)}${window(x.raw)}${pfProseTip(x.raw)}`; }, null, opt);
   pfChart("#pfCache", "#pfCacheNote", pfRows(runs,"cache_pct"), "cache hit %",
     (v,n,x)=>{ const p=perfOf(x.raw);
-      return `${fmt1(v)}% of prompt tokens served from KV cache · ${fmt(p.in_tokens)} prompt tokens counted${pfProseTip(x.raw)}`; }, names);
+      return `${fmt1(v)}% of prompt tokens served from KV cache · ${fmt(p.in_tokens)} prompt tokens counted${pfProseTip(x.raw)}`; }, null, opt);
   pfChart("#pfMTP", "#pfMTPNote", pfRows(runs,"mtp_acc_pct"), "draft acceptance %",
-    (v,n,x)=>`${fmt1(v)}% of MTP draft tokens accepted`, names);
+    (v,n,x)=>`${fmt1(v)}% of MTP draft tokens accepted`, null, opt);
   pfCap(runs);
 }
-function pfChart(id, noteSel, rows, yTitle, fmtTip, names){
+function pfChart(id, noteSel, rows, yTitle, fmtTip, names, opts){
   const box = $(id).closest(".chart-box"), note = $(noteSel);
   if(!rows.length){
     dropChart(id); box.hidden = true;
@@ -504,41 +581,66 @@ function pfChart(id, noteSel, rows, yTitle, fmtTip, names){
     return;
   }
   box.hidden = false; note.hidden = true; note.textContent = "";
-  bars(id, rows, yTitle, fmtTip, names);
+  bars(id, rows, yTitle, fmtTip, names, opts);
 }
 const PF_COUNTERS = [[4096,"n_out_gt4096"],[8192,"n_out_gt8192"]];
+/* The manifest records only a count of non-200 responses; the round write-up says what that count
+   was, and a bare number in the caption would not. Keyed by round id, so a new round prints its own
+   count until someone writes the phrase here. */
+const PF_ERRORS = { "m-2026-11-12-run5-strata_ud_q3_k_xl": "run5 ud 5xx (cold start)" };
 function pfCap(runs){
-  /* A list, not a canvas: the point of this card is reading one round against one ceiling, and an
-     amber row is a round whose longest response landed exactly on its cap, a red one a round that
-     got past it (a counter counts against a cap only when its threshold is at or above that cap). */
-  let pinned=0, over=0, nCap=0, nMax=0;
-  const rows = runs.map(m=>{
+  /* One chart (F5), not a dozen stacked cards: the cap question is a distance — how close each
+     round's longest response came to the ceiling that round ran under — so it is drawn as a bar
+     against a dashed cap mark. Amber stroke = the response landed exactly on the cap, red = past it
+     (a counter counts against a cap only when its threshold is at or above that cap). */
+  const box = $("#pfCap").closest(".chart-box"), note = $("#pfCapNote");
+  const rows = runs.filter(m=>perfOf(m).max_out!=null).map(m=>{
     const p = perfOf(m);
-    if(p.cap_tokens!=null) nCap++;
-    if(p.max_out!=null) nMax++;
-    const at = p.cap_tokens!=null && p.max_out!=null && p.max_out===p.cap_tokens;
+    const at = p.cap_tokens!=null && p.max_out===p.cap_tokens;
     const past = (p.cap_tokens!=null && PF_COUNTERS.some(([thr,k])=>thr>=p.cap_tokens && (p[k]||0)>0))
-              || (p.cap_tokens!=null && p.max_out!=null && p.max_out>p.cap_tokens);
-    if(at) pinned++;
-    if(past) over++;
-    const state = p.cap_tokens==null ? "cap unrecorded"
-      : p.max_out==null ? "longest response unrecorded"
-      : past ? "engine exceeded its cap"
-      : at ? "engine pinned at the cap" : "stopped short of the cap";
-    const cnt = PF_COUNTERS.map(([thr,k])=>`<span>responses &gt;${thr} <code>${fmt(p[k])}</code></span>`).join("");
-    return `<div class="caprow${at?" pinned":""}${past?" over":""}" title="${m.id}">
-      <b>${pfLabel(m)}</b><span>cap <code>${fmt(p.cap_tokens)}</code></span>
-      <span>longest response <code>${fmt(p.max_out)}</code></span>${cnt}
-      <span class="capstate">${state}</span></div>`;
-  }).join("");
-  let concl;
-  if(!nCap) concl = "Not one published round records the max_tokens it was configured with, so this checkout cannot answer the cap question at all.";
-  else if(!nMax) concl = `All ${nCap} rounds state the cap they ran under, and none of them records the longest response it produced, so the ceiling is on the table here while whether the engine reached it is not.`;
-  else if(over) concl = `${over} of ${nMax} rounds produced a response longer than the cap they were configured with, so that cap is a request setting the engine can walk past rather than a hard limit.`;
-  else if(pinned) concl = `${pinned} of ${nMax} rounds ended with their longest response exactly at the cap, so the engine was pinned there instead of finishing on its own.`;
-  else concl = `None of the ${nMax} rounds came anywhere near its cap, so those answers stopped short of the ceiling by themselves.`;
-  $("#pfCap").innerHTML = rows;
-  const note = $("#pfCapNote"); note.hidden = false; note.textContent = concl;
+              || (p.cap_tokens!=null && p.max_out>p.cap_tokens);
+    return {label:pfLabel(m), name:pfLabel(m), model:slugOf(m), v:p.max_out, cap:p.cap_tokens, at, past, raw:m};
+  }).sort((a,b)=>(b.v-a.v) || a.label.localeCompare(b.label));
+  if(!rows.length){
+    dropChart("#pfCap"); box.hidden = true;
+    note.hidden = false;
+    note.textContent = "Not one published round records the longest response it produced, so this checkout cannot answer the cap question at all.";
+    return;
+  }
+  box.hidden = false;
+  /* One short dashed mark per row rather than one line down the plot: rounds ran under different
+     caps (4096 early, 8192 on run7), so a single vertical would claim a shared ceiling. */
+  const capMark = {id:"capMark", afterDatasetsDraw(c){
+    const xs = c.scales.x, ys = c.scales.y, g = c.ctx, area = c.chartArea, n = rows.length;
+    if(!xs || !ys || !n) return;
+    const band = (area.bottom-area.top)/n;
+    g.save(); g.setLineDash([5,4]); g.lineWidth = 1.5;
+    rows.forEach((r,i)=>{
+      if(r.cap==null) return;
+      const x = xs.getPixelForValue(r.cap), yc = ys.getPixelForValue(i);
+      if(!Number.isFinite(x) || !Number.isFinite(yc)) return;
+      const half = Math.max(4, band/2-3);
+      g.strokeStyle = r.past ? "rgba(255,93,93,.85)" : "rgba(255,176,32,.8)";
+      g.beginPath(); g.moveTo(x, yc-half); g.lineTo(x, yc+half); g.stroke();
+    });
+    g.restore();
+  }};
+  const vals = [...rows.map(r=>r.v), ...rows.map(r=>r.cap).filter(c=>c!=null)];
+  bars("#pfCap", rows, "longest response (tokens)",
+    (v,n,x)=>{ const p = perfOf(x.raw);
+      return `${fmt(v)} tokens longest response · cap ${fmt(p.cap_tokens)}` +
+        (x.past ? " · the engine got past its cap"
+                : x.at ? " · pinned exactly at the cap" : " · stopped short of the cap") +
+        PF_COUNTERS.map(([thr,k])=>` · over ${thr}: ${fmt(p[k])}`).join("") +
+        (p.errors ? ` · ${p.errors} non-200 inside the window` : ""); },
+    null, {mcolors:true, fmtV:fmt, xMax:Math.max(...vals)*1.06, plugins:[capMark]});
+  const pinned = new Set(rows.filter(r=>r.at).map(r=>r.model)).size;
+  const past = rows.filter(r=>r.past).length;
+  const errs = runs.filter(m=>perfOf(m).errors).map(m=>PF_ERRORS[m.id] || `${pfLabel(m)} ${perfOf(m).errors} non-200`);
+  note.hidden = false;
+  note.textContent = `${pinned} model${pinned===1?"":"s"} pinned at cap` +
+    (past ? ` · ${past} round${past===1?"":"s"} past its cap` : " · none past its cap") +
+    ` · errors: ${errs.length ? errs.join("; ") : "none recorded in any round window"}`;
 }
 
 /* ---------- overview: cross-run aggregation ---------- */
@@ -623,8 +725,10 @@ function mkChart(id, cfg){
   charts[id]=new Chart($(id), cfg);
 }
 const GRID="rgba(130,160,255,.08)";
-function scaled(narrow, yTitle){
-  return {x:{ticks:{color:"#c6cede",font:{size:narrow?10:11.5},maxRotation:45,minRotation:45,autoSkip:false},grid:{display:false}},
+function scaled(narrow, yTitle, flat){
+  /* flat = labels that may not be cut, so they also may not be tilted into each other (F2) */
+  return {x:{ticks:{color:"#c6cede",font:{size:narrow?10:11.5},maxRotation:flat?0:45,minRotation:flat?0:45,
+                 autoSkip:false},grid:{display:false}},
           y:{beginAtZero:true,ticks:{color:"#8a94a8"},grid:{color:GRID},
              title:{display:!!yTitle&&!narrow,text:yTitle,color:"#8a94a8"}}};
 }
@@ -640,15 +744,94 @@ function dropChart(id){ if(charts[id]){ charts[id].destroy(); charts[id]=null; }
    borderRadius 8, one bar per row, labels shortened inside a narrow box. Callers sort
    rows by descending value (the x order may be a semantic ladder instead — see cellChart).
    fmtTip(value, name, row) → the caller owns the tooltip wording. */
-function bars(id, rows, yTitle, fmtTip, names){
+function bars(id, rows, yTitle, fmtTip, names, opts){
   if(!rows.length){ dropChart(id); return; }
+  opts = opts||{};
+  const fill = x => opts.mcolors ? modelColor(x.model||x.name) : color(x.name, names);
+  const box = $(id).closest(".chart-box");
+  /* One place decides orientation (F2): a row of category labels rotated 45° into eight
+     characters is unreadable on a phone, so past a handful of categories the bars lie down and
+     the name becomes a left-hand axis label that can use the full width. Callers can force it. */
+  if(opts.horizontal != null ? opts.horizontal : rows.length > 6)
+    return hbars(id, rows, yTitle, fmtTip, fill, opts, box);
+  if(box) box.style.height = "";                     // a previous horizontal render sized this box
   const narrow=narrowBox(id);
-  mkChart(id,{type:"bar",data:{labels:rows.map(x=>lab(x.label,narrow)),
-    datasets:[{data:rows.map(x=>x.v),backgroundColor:rows.map(x=>color(x.name,names)),
+  /* fullLabels: a vertical chart with only a few categories still has to name them properly —
+     these are served-model slugs, the whole point of the chart, so no "strata_i…" here either.
+     Only while there are few enough that an upright label cannot collide with its neighbour. */
+  const flat = !!opts.fullLabels && rows.length<=4;
+  mkChart(id,{type:"bar",data:{labels:rows.map(x=>flat || !narrow ? x.label : lab(x.label,narrow)),
+    datasets:[{data:rows.map(x=>x.v),backgroundColor:rows.map(fill),
       borderRadius:8,maxBarThickness:46}]},
     options:{...baseOpts, plugins:{...baseOpts.plugins,
       tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.y, rows[c.dataIndex].name, rows[c.dataIndex])}}},
-      scales:scaled(narrow,yTitle)}});
+      scales:scaled(narrow,yTitle,flat)}});
+}
+/* Label sizes are measured, not guessed: the widest name gets the box's label budget (45% of the
+   width on a phone — the bar itself only has to be long enough to read its printed value), and the
+   font shrinks to fit down to 10px. Truncating is not an option here: the name IS the datum.
+   The measurement uses the same family the axis is drawn with, or the ruler lies and the longest
+   name ends up clipped at the edge of the canvas. */
+const TICK_FONT = "ui-sans-serif,system-ui,sans-serif";
+const MEAS = document.createElement("canvas").getContext("2d");
+const labelBudget = boxW => Math.max(100, boxW*(boxW<620?0.45:0.4));
+function labelFont(labels, boxW){
+  const size = 12;
+  MEAS.font = size+"px "+TICK_FONT;
+  const widest = Math.max(...labels.map(l=>MEAS.measureText(String(l)).width), 1);
+  const budget = labelBudget(boxW)*0.97;                       // the axis leaves itself a little room
+  return widest>budget ? Math.max(10, Math.floor(size*budget/widest)) : size;
+}
+/* At the 10px floor a long name can still be wider than the budget (a 390px card holds about 150px
+   of label). It then breaks onto a second line near its middle, at a space, instead of running off
+   the canvas — Chart.js draws an array label as stacked lines. */
+function wrapLabel(s, boxW, fs){
+  MEAS.font = fs+"px "+TICK_FONT;
+  if(MEAS.measureText(s).width <= labelBudget(boxW)*0.97 || s.indexOf(" ")<0) return s;
+  const at = Math.ceil(s.length/2);
+  let cut = s.lastIndexOf(" ", at);
+  if(cut<0) cut = s.indexOf(" ");
+  return [s.slice(0,cut), s.slice(cut+1)];
+}
+/* Horizontal bars: one ~26px row per category, full name on the left, value printed at the bar
+   end (the axis ticks are shared by rows whose bars end in different places, so the number has to
+   sit where the bar stops). `at`/`past` rows get a warning stroke — that is how a cap reads. */
+function hbars(id, rows, axisTitle, fmtTip, fill, opts, box){
+  const W = (box && box.clientWidth) || 600, fs = labelFont(rows.map(x=>x.label), W);
+  const labels = rows.map(x=>wrapLabel(String(x.label), W, fs));
+  const rowH = labels.some(l=>Array.isArray(l)) ? 30 : 26;    // a two-line name needs its band
+  if(box) box.style.height = (rows.length*rowH+34)+"px";
+  const fmtV = opts.fmtV || (rows.every(x=>Number.isInteger(x.v)) ? fmt : fmt1);
+  const endValue = {id:"barEndValue", afterDatasetsDraw(c){
+    const g=c.ctx, meta=c.getDatasetMeta(0);
+    g.save(); g.font="11px ui-sans-serif,system-ui,sans-serif"; g.textBaseline="middle";
+    meta.data.forEach((el,i)=>{
+      const v = rows[i] ? rows[i].v : null; if(v==null) return;
+      const txt=fmtV(v), tw=g.measureText(txt).width, inside=el.x-el.base > tw+14;
+      g.fillStyle = inside ? "#0b1020" : "#8a94a8";          // dark on the bar, dim beside a short one
+      g.textAlign = inside ? "right" : "left";
+      g.fillText(txt, inside ? el.x-6 : el.x+6, el.y);
+    });
+    g.restore();
+  }};
+  mkChart(id,{type:"bar",
+    data:{labels,                                                 // never lab()-shortened: the name is the datum
+      datasets:[{data:rows.map(x=>x.v), backgroundColor:rows.map(fill),
+        borderColor:rows.map(x=>x.past?"#ff5d5d":(x.at?"#ffb020":"rgba(0,0,0,0)")),
+        borderWidth:rows.map(x=>x.at||x.past?2:0),
+        borderRadius:8, maxBarThickness:22}]},
+    options:{...baseOpts, indexAxis:"y", layout:{padding:{right:52}},   // room for a value printed outside
+      plugins:{...baseOpts.plugins,
+        tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>fmtTip(c.parsed.x, rows[c.dataIndex].name, rows[c.dataIndex])}}},
+      scales:{x:{beginAtZero:true, max:opts.xMax, ticks:{color:"#8a94a8"}, grid:{color:GRID},
+                 title:{display:!!axisTitle && W>=620, text:axisTitle, color:"#8a94a8"}},   // the card h2 already names the unit on a phone
+              y:{ticks:{color:"#c6cede", font:{size:fs, family:TICK_FONT}, autoSkip:false}, grid:{display:false},
+                 /* Chart.js fits this axis to its own measurement of the widest name and right-aligns
+                    the text at the far edge of it, so the longest label always lands flush against the
+                    canvas edge and reads as cut off ("…n4 qwen3.8-27b"). The gutter is the only way to
+                    give it an edge to sit off; it costs 8px of bar, not a row of text. */
+                 afterFit(a){ a.width += 8; }}}},
+    plugins:[endValue, ...(opts.plugins||[])]});
 }
 function barSorted(id, valFn, yTitle, fmtTip){
   const r=run();
