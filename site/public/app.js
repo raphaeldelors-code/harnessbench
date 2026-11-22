@@ -157,6 +157,15 @@ const isWarm = leg => leg.startsWith("warm");
 const mrun = () => (DATA.model_runs||[])[modelIdx];
 const shortId = id => id.replace(/^m-\d{4}-\d{2}-\d{2}-/,"");
 const sdRuns = () => (DATA.model_runs||[]).filter(m=>m.agentic);
+/* the speed-only rounds: six settings of one served model, named by what they share
+   ("strata_iq4_xs" → the iq4 ladder) — the round ids say nothing a chip label does not */
+const tuneRuns = () => (DATA.model_runs||[]).filter(m=>!m.agentic);
+const tuneFam = () => {
+  const t = tuneRuns();
+  if(!t.length) return "tuning";
+  const slug = slugOf(t[0]).replace(/^strata_/,"");
+  return (slug.match(/^[a-z]+\d+/)||[slug||"tuning"])[0];
+};
 const SD_CHARTS = ["#sdResolved","#sdEff"];
 const PF_CHARTS = ["#pfDecode","#pfEncode","#pfCache","#pfMTP","#pfCap"];
 /* the artifact round a showdown card belongs to: id minus its date prefix and its model-slug
@@ -224,11 +233,14 @@ function renderModels(){
   const mrs = DATA.model_runs||[];
   if(modelIdx>=mrs.length) modelIdx = 0;
   /* the showdown and performance views are both about agentic rounds — without any, they have
-     nothing to show, so the lane falls back to its tuning overview */
+     nothing to show, so the lane falls back to its overview. The tuning view is the mirror case:
+     with no speed-only rounds there is no ladder to plot. */
   if((modelView==="showdown" || modelView==="perf") && !mrs.some(m=>m.agentic)) modelView = "overview";
+  if(modelView==="tune" && !mrs.some(m=>!m.agentic)) modelView = "overview";
   renderModelSub();
   /* The round picker is part of the overview (F4): the showdown and performance views bring their
-     own filters, and a 21-chip row above them was the first thing on every lane view. */
+     own filters, and a 21-chip row above them was the first thing on every lane view. The tuning
+     view carries its own round chips in its header, so the picker stays out of it too. */
   $("#modelTabs").hidden = !(modelView==="overview" || modelView==="run");
   renderModelPicker();
   const inRun = modelView==="run" && mrs.length>0;
@@ -236,19 +248,24 @@ function renderModels(){
   $("#modelOverview").hidden = modelView!=="overview";
   $("#modelShowdown").hidden = modelView!=="showdown";
   $("#modelPerf").hidden = modelView!=="perf";
+  $("#modelTune").hidden = modelView!=="tune";
   $("#modelRunView").hidden = !inRun;
   if(modelView==="showdown") renderShowdown();
   else if(modelView==="perf") renderModelPerf();
+  else if(modelView==="tune") renderModelTune();
   else if(inRun) renderModelRun(mrun());
   else renderModelOverview();
 }
 function renderModelSub(){
-  /* the lane's three views, in chip style like the leg chips. Buttons, not spans: these switch
-     what is on screen, so they have to be tabbable and operable from the keyboard. */
+  /* the lane's four views, in chip style like the leg chips. Buttons, not spans: these switch
+     what is on screen, so they have to be tabbable and operable from the keyboard. A view with no
+     rounds of its kind is not offered at all — an empty Showdown or Tuning tab is a dead end. */
   const c = $("#modelSub"); c.innerHTML="";
-  const sd = sdRuns().length;
-  [["overview","Overview"],["showdown","Showdown"],["perf","Performance"]].forEach(([view,label])=>{
-    if(view!=="overview" && !sd) return;
+  const mrs = DATA.model_runs||[];
+  const has = {overview: true, showdown: sdRuns().length, perf: sdRuns().length,
+               tune: mrs.some(m=>!m.agentic)};
+  [["overview","Overview"],["showdown","Showdown"],["perf","Performance"],["tune","Tuning"]].forEach(([view,label])=>{
+    if(!has[view]) return;
     const on = modelView===view;
     const b = document.createElement("button");
     b.type="button"; b.className="chip"+(on?" on":"");
@@ -277,7 +294,8 @@ function roundChip(m, i, label, dot){
 }
 function renderModelPicker(){
   /* The lane used to open with 21 near-identical tabs: a scroll, not a choice. Grouped instead —
-     the showdown rounds one row per bench night, the tuning ladder folded away until asked. */
+     the showdown rounds one row per bench night. The tuning ladder has its own view now, so its
+     six chips ride in that view's header (renderModelTune) instead of a folded group here. */
   const t = $("#modelTabs"); t.innerHTML = "";
   const mrs = DATA.model_runs||[], ids = new Map(mrs.map((m,i)=>[m,i]));
   const runs = sdRuns();
@@ -293,21 +311,10 @@ function renderModelPicker(){
       row.appendChild(c); t.appendChild(row);
     });
   }
-  const tune = mrs.filter(m=>!m.agentic);
-  if(tune.length){
-    /* One served model in six engine settings, so the group is labelled by that family and every
-       chip carries the same steel blue: here the label is the difference, not the colour. */
-    const slug = slugOf(tune[0]).replace(/^strata_/,"");
-    const fam = (slug.match(/^[a-z]+\d+/)||[slug||"tuning"])[0];
-    const d = document.createElement("details"); d.className="pk-tune";
-    d.innerHTML = `<summary>${fam} tuning (${tune.length})</summary>`;
-    const c = document.createElement("div"); c.className="chips";
-    tune.forEach(m=>c.appendChild(roundChip(m, ids.get(m), shortId(m.id), MODEL_COLORS._tuning)));
-    d.appendChild(c); t.appendChild(d);
-  }
-  /* F6: a caption in words, so nothing below is legible only to someone who already knows the hues */
+  /* F6: a caption in words, so nothing below is legible only to someone who already knows the hues.
+     It names the tuning ladder as a view, not as a chip row here: its chips left the picker (F2). */
   const leg = document.createElement("p"); leg.className="dim pk-legend";
-  leg.innerHTML = `A chip dot, a chart bar and a card border in the same hue are the same engine, on every chart of this lane · the tuning rounds are settings of one served model and share one steel blue, told apart by their label only · verdicts are spelled out as pills: <span class="pill keep">keep</span> <span class="pill undo">revert</span> <span class="pill partial">partial</span> <span class="pill info">info</span>`;
+  leg.innerHTML = `A chip dot, a chart bar and a card border in the same hue are the same engine, on every chart of this lane · every round below is an agentic showdown; the six settings of one served model are the Tuning view, where one steel blue is told apart by its label only · verdicts are spelled out as pills: <span class="pill keep">keep</span> <span class="pill undo">revert</span> <span class="pill partial">partial</span> <span class="pill info">info</span>`;
   t.appendChild(leg);
 }
 function renderModelRun(m){
@@ -403,10 +410,49 @@ function modelRows(m){
   $("#modelRows").innerHTML=html+"</tbody></table>";
 }
 function renderModelOverview(){
-  const models = DATA.models||[];
+  /* The landing view is navigation + headline only (F2): one card with the lane's headline result,
+     and the grouped round picker under it. The single-model speed bars and the verdicts table were
+     tuning-ladder artifacts on a landing page ("one bar, one model") — they live in the Tuning view
+     now, where the ladder framing makes them read. Nothing here is a chart. */
   // the round-view charts belong to an open round; don't leave them attached to hidden canvases
   dropChart("#mDecode"); dropChart("#mPrefill");
+  dropChart("#mModelTps"); dropChart("#mModelPp");
   SD_CHARTS.forEach(dropChart); PF_CHARTS.forEach(dropChart);
+  const models = DATA.models||[], sd = sdRuns();
+  const gpu = (DATA.hardware||{}).gpu?.model || "local GPU";
+  const gpuShort = gpu.replace(/^NVIDIA GeForce /,"") || gpu;    // one RTX 3090, not a vendor string
+  const nights = sdNights(sd).length;
+  const one = (n,w) => `${n} ${w}${n===1?"":"s"}`;
+  const best = models.filter(m=>m.best_resolved!=null).sort((a,b)=>b.best_resolved-a.best_resolved)[0];
+  $("#mHeadline").innerHTML = `<div class="big">${best
+      ? `showdown best: <b>${best.slug}</b> · <b>${(best.best_resolved*100).toFixed(0)}%</b> resolved`
+      : `<span class="dim">no showdown round scored yet</span>`}</div>
+    <div class="big">${one(sd.length,"agentic round")} over ${one(nights,"night")} ·
+      <b>${models.length}</b> engine${models.length===1?"":"s"} on one <b>${gpuShort}</b></div>`;
+}
+function renderModelTune(){
+  /* The tuning ladder's own home (F1/F3): everything this lane measures about speed and nothing
+     about quality. The two median bars are one served model measured under six engine settings —
+     with the ladder named above them, that reads as a comparison of settings, not as a chart with
+     a single bar on it. Below: the round chips the picker group used to fold away, the verdict
+     counts, the bars, and the verdicts table. */
+  dropChart("#mDecode"); dropChart("#mPrefill");
+  SD_CHARTS.forEach(dropChart); PF_CHARTS.forEach(dropChart);
+  const mrs = DATA.model_runs||[], ids = new Map(mrs.map((m,i)=>[m,i]));
+  const tune = tuneRuns();
+  const nKeep = tune.filter(m=>vclass(m.verdict)==="keep").length;   // "kept" is a tuning decision
+  const nUndo = tune.filter(m=>vclass(m.verdict)==="undo").length;
+  const head = $("#mTuneHead");
+  head.innerHTML = `<h2>${tuneFam()} tuning ladder</h2>
+    <p class="dim note">engine settings for one served model — speed only, not comparable to the agentic showdown rounds.</p>
+    <div class="chips tune-chips"></div>
+    ${tune.length?`<div class="champ"><span class="medal">⚙</span>${tune.map(m=>pill(m.verdict)).join(" ")}
+      <b>${nKeep}</b> kept · <b>${nUndo}</b> reverted</div>`:""}`;
+  /* every chip carries the same steel blue — here the label is the difference, not the colour —
+     and each one opens its round view exactly as the old picker group's chips did */
+  const row = head.querySelector(".tune-chips");
+  tune.forEach(m=>row.appendChild(roundChip(m, ids.get(m), shortId(m.id), MODEL_COLORS._tuning)));
+  const models = DATA.models||[];
   if(!models.length){
     dropChart("#mModelTps"); dropChart("#mModelPp");
     $("#modelVerdicts").innerHTML="<p class='dim'>No model runs published yet.</p>";

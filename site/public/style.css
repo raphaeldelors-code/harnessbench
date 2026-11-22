@@ -112,21 +112,22 @@ details.lane-intro summary::before{content:"▸ ";color:var(--acc1)}
 details.lane-intro[open] summary::before{content:"▾ "}
 details.lane-intro .big,details.lane-intro .champ{margin-top:10px}
 details.lane-intro .big{font-size:14px}
-/* F4: the round picker. One labelled row per bench night instead of 21 look-alike tabs, the tuning
-   ladder folded shut, and the hue story spelled out once — so the flex row of run tabs becomes a
-   stack of groups, and the charts below it start higher up the page. */
+/* F4: the round picker. One labelled row per bench night instead of 21 look-alike tabs, and the hue
+   story spelled out once — so the flex row of run tabs becomes a stack of groups, and the views
+   below it start higher up the page. The tuning ladder is not folded away in here any more: it has
+   its own submenu view, and its six round chips ride in that view's header. */
 #modelTabs{display:grid;gap:9px;margin:10px 0 2px}
 .pk-head{font-size:13.5px;font-weight:700}
 .pk-head .dim{font-weight:400;margin-left:6px}
 .pk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pk-night{min-width:62px;color:var(--dim);font-size:11.5px;font-weight:700;
   text-transform:uppercase;letter-spacing:.5px}
-.pk-tune summary{cursor:pointer;font-size:13px;color:var(--dim);list-style:none}
-.pk-tune summary::before{content:"▸ ";color:var(--acc1)}
-.pk-tune[open] summary::before{content:"▾ "}
-.pk-tune .chips{margin-top:8px}
 .pk-legend{font-size:12px;line-height:1.7}
 .pk-legend .pill{padding:2px 7px;font-size:10.5px;letter-spacing:.4px}
+/* F2: the landing card is two lines and no charts — one fact per line, so they need their own gap */
+#mHeadline .big+.big{margin-top:8px}
+/* F3: the tuning view's header row of round chips, between the caveat line and the verdict pills */
+.tune-chips{margin-top:10px}
 /* F4 at phone width: these tables hold more columns than a 390px card, so they scroll inside
    their own box rather than squeezing until a header clips ("OUTPU") */
 #modelVerdicts table,.table-wrap.rows table{min-width:620px}

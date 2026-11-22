@@ -114,9 +114,10 @@
 
   <!-- ===== MODELS (model bench lane): engine/quantization tuning rounds ===== -->
   <section class="panel" id="sec-models" hidden>
-    <!-- lane submenu first: it decides which view below is open. The Models lane holds three
-         different questions (how fast is each served model, what did the showdown nights score,
-         how fast was the engine while an agent worked), and 21 round tabs would bury the choice. -->
+    <!-- lane submenu first: it decides which view below is open. The Models lane holds four
+         different questions (what the showdown nights scored, how fast the engine was while an
+         agent worked, how fast one served model runs under its tuning ladder, and what one round
+         captured), and 21 round tabs would bury the choice. -->
     <nav id="modelSub" class="chips model-sub" aria-label="Models lane views"></nav>
     <!-- the engine-dump intro sits below the submenu (F1) and collapsed: six engine names are a
          footnote to the lane, not a headline that pushes the first chart off a phone screen -->
@@ -124,24 +125,11 @@
     <nav id="modelTabs" class="tabs run-tabs"></nav>
     <div id="modelBanner" class="banner" hidden></div>
 
-    <!-- lane overview: one bar per served model -->
+    <!-- lane overview: navigation + headline only (F2). The single-model speed bars and the
+         verdicts table are tuning-ladder artifacts — they live in the Tuning view now. -->
     <div id="modelOverview">
       <div class="grid">
-        <div class="card wide">
-          <h2>Decode speed <span class="sub">median output tok/s per model, over every non-warm row of its rounds</span></h2>
-          <div class="chart-box"><canvas id="mModelTps"></canvas></div>
-        </div>
-        <div class="card wide">
-          <h2>Prefill speed <span class="sub">median input tok/s per model</span></h2>
-          <div class="chart-box"><canvas id="mModelPp"></canvas></div>
-        </div>
-        <div class="card wide">
-          <h2>Verdicts <span class="sub">one row per tuning round · Δ = that round's median decode minus the median of the same model's other rounds</span></h2>
-          <div id="modelVerdicts" class="table-wrap"></div>
-          <p class="dim note">Speed only. These tuning rounds compare engine settings for one served model on one rig; they say nothing about
-            task quality, and their tok/s are not comparable to the harness lane's resolved % or to other models.
-            The task-quality rounds of this lane — the agentic showdowns — are on the Showdown tab and feed none of the numbers above.</p>
-        </div>
+        <div class="card wide" id="mHeadline"></div>
       </div>
     </div>
 
@@ -210,6 +198,31 @@
       <p class="dim note">Every number here is the round's own agent-phase capture, copied into the manifest without re-derivation
         (<code>schemas/modelrun.schema.json</code> → <code>agentic.perf</code>); a blank is a field that capture did not record, not a zero.
         These are speed readings of the engine while an agent drove it: they grade nothing about the patch an agent produced, and they are not comparable to the tuning-leg charts on a round page.</p>
+    </div>
+
+    <!-- the tuning ladder's own home (F1/F3): everything this lane measures about speed for one
+         served model — the two median bars, the tuning round chips, the verdict pills and table.
+         Speed only: none of it says anything about task quality, and it is not comparable to the
+         agentic showdown rounds above. -->
+    <div id="modelTune" hidden>
+      <div class="card wide" id="mTuneHead"></div>
+      <div class="grid">
+        <div class="card wide">
+          <h2>Decode speed <span class="sub">median output tok/s per model, over every non-warm row of its rounds</span></h2>
+          <div class="chart-box"><canvas id="mModelTps"></canvas></div>
+        </div>
+        <div class="card wide">
+          <h2>Prefill speed <span class="sub">median input tok/s per model</span></h2>
+          <div class="chart-box"><canvas id="mModelPp"></canvas></div>
+        </div>
+        <div class="card wide">
+          <h2>Verdicts <span class="sub">one row per tuning round · Δ = that round's median decode minus the median of the same model's other rounds</span></h2>
+          <div id="modelVerdicts" class="table-wrap"></div>
+          <p class="dim note">Speed only. These tuning rounds compare engine settings for one served model on one rig; they say nothing about
+            task quality, and their tok/s are not comparable to the harness lane's resolved % or to other models.
+            The task-quality rounds of this lane — the agentic showdowns — are on the Showdown tab and feed none of the numbers above.</p>
+        </div>
+      </div>
     </div>
 
     <!-- one tuning round: legs compared inside each input-size cell -->

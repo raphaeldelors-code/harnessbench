@@ -31,8 +31,6 @@ CANVASES = {
         "#cMc",
     ],
     "models": [
-        "#mModelTps",
-        "#mModelPp",
         # run-view canvases: present in the models panel, drawn only once a round is open
         "#mDecode",
         "#mPrefill",
@@ -43,6 +41,8 @@ CANVASES = {
         "#pfCache",
         "#pfMTP",
         "#pfCap",
+        # the tuning-ladder bars (#mModelTps, #mModelPp) are listed here no longer: they left the
+        # lane overview for the Tuning view, and the submenu walk below gates them there
     ],
 }
 
@@ -87,6 +87,13 @@ def drawn(canvas) -> bool:
             for (let i = 3; i < d.length; i += 4) if (d[i] > 0) return true;
             return false; }"""
     )
+
+
+def text_of(page, sel: str) -> str:
+    """Text of a selector, "" when it is absent: a view's own ids are the thing under test here,
+    so a missing one has to be reported as a failure instead of crashing the run."""
+    el = page.query_selector(sel)
+    return el.inner_text() if el is not None else ""
 
 
 def check_page(page, label: str) -> list[str]:
@@ -143,8 +150,10 @@ def check_page(page, label: str) -> list[str]:
                 errors += overflow_errors(page, label, f"models/{rid}")
             # the lane submenu switches views in place, exactly as its chips do, so each view's
             # own charts, notes and phone overflow get gated (the CANVASES pass above finds the
-            # performance canvases hidden there and skips them — that is what this walk is for)
-            for view in ("showdown", "perf"):
+            # performance and tuning canvases hidden in the views this walk opens, and skips them —
+            # that is what this walk is for). All four views are walked, the overview included:
+            # the landing view is gated for the tuning artifacts it must no longer carry.
+            for view in ("overview", "showdown", "perf", "tune"):
                 page.evaluate(f"showSection('models'); modelView = '{view}'; render()")
                 page.wait_for_timeout(800)
                 where = f"models/{view}"
@@ -180,8 +189,53 @@ def check_page(page, label: str) -> list[str]:
                             errors.append(f"{label}/{where}: night chip click left the cards unchanged")
                     if page.evaluate("location.hash") != "#models":
                         errors.append(f"{label}/{where}: night chip navigated instead of re-rendering")
+                elif view == "overview":
+                    # the landing view is navigation + headline only (F2): one headline card and the
+                    # grouped round picker, and the tuning bars are out of its flow for good
+                    if not text_of(page, "#mHeadline").strip():
+                        errors.append(f"{label}/{where}: #mHeadline carries no headline line")
+                    stray = []
+                    for cid in ("#mModelTps", "#mModelPp"):
+                        el = page.query_selector(cid)
+                        if el is not None and el.is_visible():
+                            stray.append(cid)
+                    if stray:
+                        errors.append(f"{label}/{where}: overview still shows the tuning bars: {stray}")
+                    nights = page.evaluate("sdNights(sdRuns()).length")
+                    rows = len(page.query_selector_all("#modelTabs .pk-row"))
+                    if nights and rows != nights:
+                        errors.append(
+                            f"{label}/{where}: {nights} bench nights, {rows} night rows in the picker"
+                        )
+                elif view == "tune":
+                    # the Tuning view is the home of everything speed-only (F1/F3): the submenu offers
+                    # it, its header names the ladder and states the caveat and offers every speed-only
+                    # round as a chip, and both median bars plus the verdicts table ride below it
+                    labels = [c.inner_text() for c in page.query_selector_all("#modelSub .chip")]
+                    if "Tuning" not in labels:
+                        errors.append(f"{label}/{where}: submenu has no Tuning entry: {labels}")
+                    head = text_of(page, "#mTuneHead")
+                    for phrase in ("tuning ladder", "speed only"):
+                        if phrase not in head:
+                            errors.append(f"{label}/{where}: #mTuneHead does not state {phrase!r}")
+                    n_tune = page.evaluate("(DATA.model_runs || []).filter(m => !m.agentic).length")
+                    chips = len(page.query_selector_all("#mTuneHead .tune-chips .chip"))
+                    if not n_tune:
+                        errors.append(f"{label}/{where}: no speed-only rounds in DATA.model_runs")
+                    elif chips != n_tune:
+                        errors.append(
+                            f"{label}/{where}: {n_tune} speed-only rounds, {chips} chips in the header"
+                        )
+                    for cid in ("#mModelTps", "#mModelPp"):
+                        el = page.query_selector(cid)
+                        if el is None or not el.is_visible():
+                            errors.append(f"{label}/{where}: {cid} missing or hidden in the Tuning view")
+                        elif not drawn(el):
+                            errors.append(f"{label}/{where}: {cid} has no pixels (empty chart)")
+                    if page.query_selector("#modelVerdicts table") is None:
+                        errors.append(f"{label}/{where}: #modelVerdicts table did not move with them")
                 else:
-                    # the cap chart draws (F5), and its one caption line states the verdict in words
+                    # perf view: the cap chart draws (F5), and its caption line states the verdict in words
                     if not page.query_selector("#pfCapNote").inner_text().strip():
                         errors.append(f"{label}/{where}: #pfCapNote has no cap-honesty caption")
                     for cid in ("#pfDecode", "#pfEncode", "#pfCache", "#pfMTP", "#pfCap"):
