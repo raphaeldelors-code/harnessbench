@@ -214,7 +214,9 @@ function renderModelRun(m){
        the agent work produced — so the leg charts would draw empty axes over a real result. */
     ["#mDecode","#mPrefill"].forEach(id=>{ dropChart(id); $(id).closest(".card").hidden = true; });
     $("#modelFilters").hidden = true;
-    $("#cellNote").hidden = true;
+    const note = $("#cellNote");
+    note.hidden = false;
+    note.textContent = "This round is an agentic showdown, not a tuning ladder: it holds one telemetry row for the whole agent phase, so no prompt-size cells exist — the score and the per-instance grid below are the result.";
     const card = $("#sdRunCard"); card.hidden = false; card.innerHTML = sdCard(m);
     modelRows(m);
     return;
