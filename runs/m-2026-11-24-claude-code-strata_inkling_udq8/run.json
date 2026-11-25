@@ -1,6 +1,6 @@
 {
   "schema_version": "hb-modelrun-v1",
-  "id": "m-2026-11-24-sb10-inkling-udq8-claude-code",
+  "id": "m-2026-11-24-claude-code-strata_inkling_udq8",
   "kind": "model",
   "date": "2026-11-24",
   "title": "Agentic showdown round - sb10 inkling-udq8 x claude-code, 20-min cap",
