@@ -1,0 +1,110 @@
+{
+  "schema_version": "hb-modelrun-v1",
+  "id": "m-2026-11-24-sb10-inkling-sq20-opencode",
+  "kind": "model",
+  "date": "2026-11-24",
+  "title": "Agentic showdown round - sb10 inkling-sq20 x opencode, 20-min cap",
+  "model": {
+    "slug": "strata_inkling_sq20",
+    "quant": "SQ-20 (Strata native build, DSpark drafting on)",
+    "family": "local"
+  },
+  "engine": "strata 0.2.21 / engine 0.1.67 (llama.cpp fork) via llama-swap",
+  "verdict": "PARTIAL",
+  "hardware": "bench-rig-01",
+  "notes": "provenance: harnessbench sb10 overnight sweep on bench-rig-01 (2026-11-24), opencode harness x strata_inkling_sq20 via llama-swap :8080, 260k ctx parallel 2 (2x130k), k8v4, 20-min cap per instance, 2 workers. counts from the official swebench eval report JSONs (error instances counted as empty: no submission); perf from llama-swap activity telemetry filtered to this cell's model id and window. per-instance steps/credit not recorded by this capture. dataset: sb5_overnight (10 SWE-bench Verified instances).",
+  "agentic": {
+    "steps_cap": null,
+    "temperature": null,
+    "n_instances": 10,
+    "resolved": 2,
+    "unresolved": 3,
+    "empty": 5,
+    "partial_credit": null,
+    "gpu_hours": 1.0,
+    "resolved_per_gpu_h": 2.0,
+    "perf": {
+      "requests": 590,
+      "in_tokens": 16399511,
+      "out_tokens": 97907,
+      "encode_avg": 960.8,
+      "encode_med": 996.1,
+      "decode_avg": 103.6,
+      "decode_med": 104.6,
+      "cache_pct": 97.3,
+      "mtp_acc_pct": 52.0
+    },
+    "per_instance": [
+      {
+        "instance": "pallets__flask-5014",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1142",
+        "result": "empty",
+        "steps": null,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1724",
+        "result": "empty",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1766",
+        "result": "empty",
+        "steps": null,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "psf__requests-1921",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-2317",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pylint-dev__pylint-4551",
+        "result": "empty",
+        "steps": null,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "pylint-dev__pylint-4604",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pytest-dev__pytest-10051",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pytest-dev__pytest-10081",
+        "result": "empty",
+        "steps": null,
+        "credit": null,
+        "patch": false
+      }
+    ]
+  }
+}
