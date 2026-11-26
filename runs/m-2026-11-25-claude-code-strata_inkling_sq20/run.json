@@ -1,0 +1,320 @@
+{
+  "schema_version": "hb-modelrun-v1",
+  "id": "m-2026-11-25-claude-code-strata_inkling_sq20",
+  "kind": "model",
+  "date": "2026-11-25",
+  "title": "Agentic showdown round - sb40 inkling-sq20 x claude-code",
+  "model": {
+    "slug": "strata_inkling_sq20",
+    "quant": "SQ-20 (Strata native build, DSpark drafting on, 260k ctx par2, 2 workers, 20-min cap)",
+    "family": "local"
+  },
+  "engine": "strata 0.2.21 / engine 0.1.66-67 via llama-swap",
+  "verdict": "PASS",
+  "hardware": "bench-rig-01",
+  "notes": "provenance: harnessbench sb40 sweep on bench-rig-01 (2026-11-25/26), claude-code harness x strata_inkling_sq20 via llama-swap :8080; SQ-20 (Strata native build, DSpark drafting on, 260k ctx par2, 2 workers, 20-min cap); 40 SWE-bench Verified instances (sb40_new, superset of the sb10 showdown set); counts from the official swebench eval report JSONs (instances without an eval report and empty patches counted as empty: no submission); perf from llama-swap activity telemetry filtered to this cell's model id and window; per-instance steps/credit not recorded by this capture. llama-swap recorded unmeasurable (-1) speed stats for this harness's streaming requests, so encode/decode medians and draft counters are null here; request counts, token totals and cache hits are recorded. Cell survived a host reboot mid-run: 31/40 predictions were kept and the cell resumed with --resume.",
+  "agentic": {
+    "steps_cap": null,
+    "temperature": null,
+    "n_instances": 40,
+    "resolved": 31,
+    "unresolved": 7,
+    "empty": 2,
+    "partial_credit": null,
+    "gpu_hours": 4.33,
+    "resolved_per_gpu_h": 7.16,
+    "perf": {
+      "requests": 1702,
+      "in_tokens": 53975189,
+      "out_tokens": 417190,
+      "encode_avg": null,
+      "encode_med": null,
+      "decode_avg": null,
+      "decode_med": null,
+      "cache_pct": 96.1,
+      "mtp_acc_pct": null
+    },
+    "per_instance": [
+      {
+        "instance": "astropy__astropy-13453",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "astropy__astropy-14096",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "astropy__astropy-14539",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "django__django-13401",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "django__django-14155",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "django__django-15561",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "matplotlib__matplotlib-14623",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "matplotlib__matplotlib-20859",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "matplotlib__matplotlib-23299",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "mwaskom__seaborn-3069",
+        "result": "empty",
+        "steps": null,
+        "credit": null,
+        "patch": false
+      },
+      {
+        "instance": "pallets__flask-5014",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1142",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1724",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1766",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-1921",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-2317",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-5414",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "psf__requests-6028",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pydata__xarray-4094",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pydata__xarray-4356",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pydata__xarray-4629",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pylint-dev__pylint-4551",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pylint-dev__pylint-4604",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pylint-dev__pylint-4661",
+        "result": "unresolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pylint-dev__pylint-6386",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pylint-dev__pylint-8898",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pytest-dev__pytest-10051",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pytest-dev__pytest-10081",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pytest-dev__pytest-5262",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pytest-dev__pytest-7521",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "pytest-dev__pytest-7982",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "scikit-learn__scikit-learn-11310",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "scikit-learn__scikit-learn-13328",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "scikit-learn__scikit-learn-9288",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "sphinx-doc__sphinx-10673",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "sphinx-doc__sphinx-8551",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "sphinx-doc__sphinx-9258",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "sympy__sympy-19040",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "sympy__sympy-19783",
+        "result": "resolved",
+        "steps": null,
+        "credit": null,
+        "patch": true
+      },
+      {
+        "instance": "sympy__sympy-22914",
+        "result": "empty",
+        "steps": null,
+        "credit": null,
+        "patch": false
+      }
+    ]
+  }
+}
