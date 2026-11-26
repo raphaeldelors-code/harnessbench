@@ -227,7 +227,7 @@ function renderModelIntro(){
     <div class="champ"><span class="medal">⚙</span>${tune.map(m=>`<span class="pill ${vclass(m.verdict)}">${m.verdict}</span>`).join(" ")}
     <span class="dim">tuning rounds are speed only — no task-quality claim</span>${nKeep?` · <b>${nKeep}</b> kept`:``}</div>
     ${nSd?`<div class="champ"><span class="medal">⚔</span>showdown best: <b>${best.slug}</b> <b>${(best.best_resolved*100).toFixed(0)}%</b> resolved
-      <span class="dim">(${scored.length} served model${scored.length===1?"":"s"} scored over ${nSd} rounds, <b>${nPass}</b> at 3+ resolved — Showdown tab)</span></div>`:""}</details>`;
+      <span class="dim">(${scored.length} served model${scored.length===1?"":"s"} scored over ${nSd} rounds, <b>${nPass}</b> with a PASS verdict — Showdown tab)</span></div>`:""}</details>`;
 }
 function renderModels(){
   const mrs = DATA.model_runs||[];
@@ -516,12 +516,13 @@ function renderShowdown(){
   /* A scoreboard row is a night × a served model, so the label is that pair ("run7 iq3s") and the
      hue is the model's — across 15 rounds the night is what repeats, and the model is what to look for. */
   const desc = (a,b) => (b.v-a.v) || a.label.localeCompare(b.label);
-  const rows = runs.map(m=>({label:pfLabel(m), name:shortId(m.id), model:slugOf(m), v:m.agentic.resolved, raw:m}));
-  bars("#sdResolved", rows.slice().sort(desc), "resolved instances",
+  const rows = runs.map(m=>({label:pfLabel(m), name:shortId(m.id), model:slugOf(m),
+                             v:100*m.agentic.resolved/(m.agentic.n_instances||10), raw:m}));
+  bars("#sdResolved", rows.slice().sort(desc), "resolved % of instances",
     (v,n,x)=>{ const a=x.raw.agentic;
-      return `${v} of ${a.n_instances} resolved · ${x.raw.date}` +
+      return `${a.resolved} of ${a.n_instances} resolved (${fmt(v)}%) · ${x.raw.date}` +
         (a.partial_credit!=null?` · partial credit ${fmt2(a.partial_credit)}`:"") +
-        (a.steps_cap?` · ${a.steps_cap}-step cap`:""); }, null, {mcolors:true});
+        (a.steps_cap?` · ${a.steps_cap}-step cap`:""); }, null, {mcolors:true, fmtV:v=>fmt1(v)+"%"});
   const eff = runs.filter(m=>m.agentic.resolved_per_gpu_h!=null)
                   .map(m=>({label:pfLabel(m), name:shortId(m.id), model:slugOf(m), v:m.agentic.resolved_per_gpu_h, raw:m}))
                   .sort(desc);

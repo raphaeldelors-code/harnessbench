@@ -144,7 +144,7 @@
       <p class="dim note" id="sdNightNote" hidden></p>
       <div class="grid">
         <div class="card wide">
-          <h2>Resolved / 10 by model-run <span class="sub">one bar per showdown round · mini-swe-agent on the 10 SWE-bench Verified instances, graded by the official eval · 3+ resolved = PASS</span></h2>
+          <h2>Resolved % by model-run <span class="sub">one bar per showdown round · share of each round's SWE-bench Verified instances resolved, graded by the official eval · rounds differ in size (10 or 40 instances) — exact counts sit in each bar's tooltip</span></h2>
           <div class="chart-box"><canvas id="sdResolved"></canvas></div>
         </div>
         <div class="card wide" id="sdEffCard">
@@ -285,7 +285,7 @@
           <li><b>Telemetry.</b> Per-instance wall windows and llama-swap token counters (input / output / cache) recorded for every attempt.</li>
           <li><b>Reproducible.</b> Each run stores an <code>run.json</code> manifest + exact component versions; raw preds are gzip-persisted.</li>
           <li><b>Two bench lanes, never mixed.</b> The Harness lane fixes the model and varies the agent. The Models lane fixes the agent layer and varies the engine (quantization / settings): legs compared inside one prompt-size cell on prefill and decode speed, verdict written by hand. Speed only — no task quality, and its tok/s are not comparable to resolved % or to another model.</li>
-          <li><b>Showdown rounds are a third thing.</b> Inside the Models lane, an <code>agentic</code> round runs mini-swe-agent once over the 10 SWE-bench Verified instances on one served build and is graded by the official eval container: resolved / 10, partial credit from the fail-to-pass fraction, GPU-hours from the run log. It shares the lane's rig and serving stack but not its measurement — those rounds are shown on their own tab and enter no tuning median, cell or Δ.</li>
+          <li><b>Showdown rounds are a third thing.</b> Inside the Models lane, an <code>agentic</code> round runs a coding harness (mini-swe-agent, claude-code or opencode) once over a SWE-bench Verified subset — 10 or 40 instances depending on the round — on one served build, graded by the official eval container: resolved share, partial credit from the fail-to-pass fraction, GPU-hours from the run log. It shares the lane's rig and serving stack but not its measurement — those rounds are shown on their own tab and enter no tuning median, cell or Δ.</li>
         </ul>
         <p class="dim note">Long version — including the model lane's noise-floor rule (median over ≥3 reps per cell) and what neither lane claims: <code>docs/METHODOLOGY.md</code> in the source repository.</p>
       </div>
